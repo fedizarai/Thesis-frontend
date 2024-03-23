@@ -1,0 +1,104 @@
+.task-header {
+  font-size: 14px; /* Replaced SCSS variable with an actual value */
+  font-weight: medium;
+  display: flex; /* Converted @extend to actual CSS */
+  padding: 15px 15px 5px; /* Example conversion from @include margin-padding mixin */
+  justify-content: flex-end;
+}
+.task-header .assignee-info {
+  border: 1px solid transparent;
+  flex: 0 1 180px;
+  position: relative;
+  border-radius: 10px; /* @include rounded(10px); */
+  padding: 5px 10px 5px 5px;
+  display: inline-flex; /* Converted @extend to actual CSS */
+  align-items: center;
+}
+.task-header .assignee-info:hover {
+  border-color: silver; /* Placeholder for $__metallic-silver */
+}
+.task-header .assignee-info a {
+  color: gray; /* Placeholder for $__gray */
+  display: flex;
+  align-items: center;
+}
+.task-header .assignee-info .remove-icon {
+  background-color: silver; /* Placeholder for $__metallic-silver */
+  border-radius: 50%;
+  color: gray; /* Placeholder for $__gray */
+  cursor: pointer;
+  height: 20px;
+  margin-right: 10px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  visibility: hidden;
+  width: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.task-header .assignee-info .task-head-title {
+  color: gray; /* Placeholder for $__candycolor */
+  font-size: 12px;
+}
+.task-header .assignee-info .task-assignee {
+  color: blue;
+  font-size: 15px;
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.task-header .task-due-date {
+  
+  border: 1px solid transparent;
+  flex: 0 0 160px;
+  position: relative;
+  padding: 5px 10px 5px 5px; /* Example conversion from @include margin-padding mixin */
+  display: flex; /* Converted @extend to actual CSS */
+  align-items: center;
+  border-radius: 10px; /* @include rounded(10px); */
+  
+}
+.task-header .task-due-date:hover {
+  border-color: silver; /* Placeholder for $__metallic-silver */
+}
+.task-header .due-date {
+  color: red;
+  font-size: 15px; 
+}
+.task-header .task-due-date .due-icon {
+  background-color: white;
+  border: 1px solid gray; /* Placeholder for $__goose-gray */
+  border-radius: 50%;
+  color: gray; /* Placeholder for $__goose-gray */
+  height: 30px;
+  line-height: 30px;
+  margin-right: 10px;
+  width: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.task-header .task-due-date a {
+  color: gray; /* Placeholder for $__gray */
+  display: flex;
+  align-items: center;
+}
+.task-header .task-due-date .remove-icon {
+  background-color: silver; /* Placeholder for $__metallic-silver */
+  border-radius: 50%;
+  color: gray; /* Placeholder for $__gray */
+  cursor: pointer;
+  height: 20px;
+  visibility: hidden;
+  width: 20px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  right: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
