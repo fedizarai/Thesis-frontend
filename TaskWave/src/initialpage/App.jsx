@@ -36,7 +36,7 @@ export default class App extends Component {
 
 
         if (location.pathname === '/') {
-            return (<Redirect to={'/app/main/dashboard'} />);
+            return (<Redirect to={'/login'} />);
         }
 
         

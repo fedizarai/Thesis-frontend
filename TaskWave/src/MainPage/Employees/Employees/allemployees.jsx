@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import React, { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { Link } from "react-router-dom";
@@ -24,20 +23,22 @@ import Offcanvas from "../../../Entryfile/offcanvance";
 import EmployeeCard from './EmployeeCard';
 
 
-const AllEmployees = ({users}) => {
+
+const AllEmployees = (  ) => {
   const [focused, setFocused] = useState(false);
   const [focused1, setFocused1] = useState(false);
   const [menu, setMenu] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const [searchId, setSearchId] = useState('');
   const [searchRole, setSearchRole] = useState('');
-  const [userToDelete, setUserToDelete] = useState(null);
-  const [users1, setUsers] = useState(users);
+  const [employeeToDeleteId, setEmployeeToDeleteId] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [employeeToEditId, setEmployeeToEditId] = useState(null);
 
  
 
 
-    const handleNameInputChange = (e) => {
+  const handleNameInputChange = (e) => {
     setNameInput(e.target.value);
   };
 
@@ -76,37 +77,68 @@ const AllEmployees = ({users}) => {
     return nameMatch && roleMatch && idMatch
 });
 
-   const handleDeleteEmployeeClick = (e, employee) => {
-    e.stopPropagation(); // Prevent event from propagating to unintended targets
-    setUserToDelete(employee);
-    // Code to show modal
-};
+ const handleDeleteEmployeeClick = (id) => {
+    setEmployeeToDeleteId(id); 
+    console.log("Employee to delete ID 2024:", id); 
+    
+  };
 
-   const employeeDelete = () => {
-     if (userToDelete?.id) {
-      console.log(userToDelete);
-      const updatedUsers = users.filter(user => user.id !== userToDelete.id);
-      setUsers(updatedUsers);
-      // Additional logic to close modal and reset userToDelete
-      setUserToDelete(null);
-    } else {
-    console.error('Attempted to delete a user, but no user was selected.');
-    // Handle the error case appropriately
+
+const employeeDelete = async (employeeId) => {
+  try {
+    console.log("Employee to delete ID:", employeeId);
+    const response = await fetch(`http://localhost:3001/deleteEmployee/${employeeId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete employee');
+    }
+    // Get the updated list of users after deletion
+    const updatedUsers = await response.json();
+    setUsers(updatedUsers);
+    // Reset employeeToDeleteId after successful deletion
+    setEmployeeToDeleteId(null);
+    window.location.reload();
+  } catch (error) {
+    console.error('Error deleting employee:', error);
+    // Handle the error case appropriately, such as displaying a message to the user
   }
 };
+
+
+
+
+
+
 
   const toggleMobileMenu = () => {
     setMenu(!menu);
   };
 
-  useEffect(() => {
-    if ($(".select").length > 0) {
-      $(".select").select2({
-        minimumResultsForSearch: -1,
-        width: "100%",
-      });
-    }
-  });
+  const handleEditEmployeeClick = (id) => {
+    setEmployeeToEditId(id); // Set the employee ID to edit
+  };
+
+   useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/users");
+        if (!response.ok) {
+          throw new Error("Failed to fetch users");
+        }
+        const data = await response.json();
+        setUsers(data);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
 
 
 
@@ -227,7 +259,7 @@ const AllEmployees = ({users}) => {
 
             <div className="row staff-grid-row">
               {filteredUsers.map((employee, index) => (
-              <EmployeeCard key={employee.id} employee={employee} onDeleteClick={handleDeleteEmployeeClick} />
+              <EmployeeCard key={employee.id} employee={employee} onDeleteClick={handleDeleteEmployeeClick} onEditClick={handleEditEmployeeClick} />
             ))}
             </div>
           </div>
@@ -240,7 +272,7 @@ const AllEmployees = ({users}) => {
 
 
           {/* Edit Employee Modal */}
-          <Editemployee />
+          <Editemployee profileId={employeeToEditId} />
           {/* /Edit Employee Modal */}
 
 
@@ -262,7 +294,7 @@ const AllEmployees = ({users}) => {
                         <Link 
                            to="#" 
                            className="btn btn-primary continue-btn" 
-                           onClick={() => {employeeDelete(userToDelete.id);}}
+                           onClick={() => employeeDelete(employeeToDeleteId)}
                         >
                           Delete
                         </Link>

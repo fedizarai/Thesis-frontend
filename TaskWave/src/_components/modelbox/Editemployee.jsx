@@ -1,260 +1,25 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import {
-  Avatar_11,
-  Avatar_09,
-  Avatar_02,
-  Avatar_10,
-  Avatar_05,
-  Avatar_12,
-  Avatar_01,
-  Avatar_13,
-  Avatar_16,
-} from "../../Entryfile/imagepath";
 
 
-const users = [
-    {
-      id: 1,
-      image: Avatar_01,
-      name: "John Doe",
-      username: name+" 2024",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      teamName : "UI/UX Design Team",
-      role: "Web Designer",
-      employee_id: "FT-0001",
-      email: "johndoe@example.com",
-      mobile: "9876543210",
-      joindate: "1 Jan 2013",
-      project: "Hospital Administration",
-      position: "Team Leader",
-
-
-    },
-    {
-      id: 2,
-      image: Avatar_01,
-      name: "Richard Miles",
-      username: name+" 2024",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      teamName : "UI/UX Design Team",
-      role: "Web Developer",
-      employee_id: "FT-0002",
-      email: "richardmiles@example.com",
-      mobile: "9876543210",
-      joindate: "18 Mar 2014",
-      project: "Video Calling App",
-      position: "Team Leader",
-
-    },
-    {
-      id: 3,
-      image: Avatar_01,
-      name: "John Smith",
-      username: name+" 2024",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      teamName : "UI/UX Design Team",
-      role: "Android Developer",
-      employee_id: "FT-0003",
-      email: "johnsmith@example.com ",
-      mobile: "9876543210",
-      joindate: "1 Apr 2014",
-      project: "Hospital Administration",
-      position: "Manager",
-    },
-    {
-      id: 4,
-      image: Avatar_01,
-      name: "Mike Litorus",
-      username: name+" 2024",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      teamName : "UI/UX Design Team",
-      role: "IOS Developer",
-      employee_id: "FT-0004",
-      email: "mikelitorus@example.com",
-      mobile: "9876543210",
-      joindate: "1 Apr 2014",
-      project: "Office Management",
-      position: "Manager",
-    },
-    {
-      id: 5,
-      image: Avatar_01,
-      name: "Wilmer Deluna",
-      username: name+" 2024",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      teamName : "UI/UX Design Team",
-      role: "Team Leader",
-      employee_id: "FT-0005",
-      email: "wilmerdeluna@example.com",
-      mobile: "9876543210",
-      joindate: "22 May 2014",
-      project: "Hospital Administration",
-      position: "Employee",
-    },
-    {
-      id: 6,
-      image: Avatar_01,
-      name: "Jeffrey Warden",
-      username: name+" 2024",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      teamName : "UI/UX Design Team",
-      role: "Web Developer",
-      employee_id: "FT-0006",
-      email: "jeffreywarden@example.com",
-      mobile: "9876543210",
-      joindate: "16 Jun 2013",
-      project: "Video Calling App",
-      position: "Employee",
-    },
-    {
-      id: 7,
-      image: Avatar_01,
-      name: "Bernardo Galaviz",
-      username: name+" 2024",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      teamName : "UI/UX Design Team",
-      role: "Web Developer",
-      employee_id: "FT-0007",
-      email: "bernardogalaviz@example.com",
-      mobile: "9876543210",
-      joindate: "1 Jan 2013",
-      project: "Hospital Administration",
-      position: "Employee",
-    },
-    {
-      id: 8,
-      image: Avatar_01,
-      name: "Lesley Grauer",
-      username: name+" 2024",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      teamName : "UI/UX Design Team",
-      role: "Team Leader",
-      employee_id: "FT-0008",
-      email: "bernardogalaviz@example.com",
-      mobile: "9876543210",
-      joindate: "1 Jan 2013",
-      project: "Video Calling App",
-      position: "Employee",
-    },
-    {
-      id: 9,
-      image: Avatar_01,
-      name: "Jeffery Lalor",
-      username: name+" 2024",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      teamName : "UI/UX Design Team",
-      role: "Web Developer",
-      employee_id: "FT-0009",
-      email: "bernardogalaviz@example.com",
-      mobile: "9876543210",
-      joindate: "1 Jan 2013",
-      project: "Hospital Administration",
-      position: "Employee",
-    },
-    {
-      id: 10,
-      image: Avatar_01,
-      name: "John Doe",
-      username: name+" 2024",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      teamName : "UI/UX Design Team",
-      role: "IOS Developer  ",
-      employee_id: "FT-0010",
-      email: "bernardogalaviz@example.com",
-      mobile: "9876543210",
-      joindate: "1 Jan 2013",
-      project: "Office Management",
-      position: "Employee",
-
-    },
-     {
-      id: 11,
-      image: Avatar_01,
-      name: "zarai fedi",
-      username: name+" 2024",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      teamName : "UI/UX Design Team",
-      role: "IOS Developer  ",
-      employee_id: "FT-0011",
-      email: "bernardogalaviz@example.com",
-      mobile: "9876543210",
-      joindate: "1 Jan 2013",
-      project: "Video Calling App",
-      position: "Employee",
-    },
-     {
-      id: 12,
-      image: Avatar_01,
-      name: "Jeffery Lalor",
-      username: name+" 2024",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      teamName : "UI/UX Design Team",
-      role: "IOS Developer  ",
-      employee_id: "FT-0012",
-      email: "bernardogalaviz@example.com",
-      mobile: "9876543210",
-      joindate: "1 Jan 2013",
-      project: "Office Management",
-      position: "Team Leader",
-    },
-  ];
-
-
-
-const Editemployee = () => {
+const Editemployee = ({ profileId }) => {
    
 
 
   const [selectedDate, setSelectedDate] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [formClosed, setFormClosed] = useState(false);
-  const [formData, setFormData] = useState({
-    fullName: '',
+  const [users, setUsers] = useState([]);
+   const [formData, setFormData] = useState({
+    name: '',
     role: '',
-    employeeID: '',
+    employee_id: '',
     email: '',
     position: '',
-    reportTo: '',
-    birthDate: '',
-    joiningDate: '',
+    report_to: '',
+    birthdate: '',
+    join_date: '',
   });
 
 
@@ -268,41 +33,123 @@ const Editemployee = () => {
     setIsTyping(true);
   };
 
-  const handleSubmit = (e) => {
-   e.preventDefault();
-  
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const { name, role, employee_id, email, position, report_to, birthdate, join_date } = formData;
+
   // Basic form validation
-  if (!formData.fullName || !formData.role || !formData.employeeID || !formData.email || !formData.birthDate || !formData.joiningDate) {
+  if (!name || !role || !employee_id || !email || !position || !report_to || !birthdate || !join_date) {
     alert('Please fill in all required fields');
     return;
   }
 
   // Email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(formData.email)) {
+  if (!emailRegex.test(email)) {
     alert('Please enter a valid email address.');
     return;
   }
 
-  // Phone number validation
-  const phoneRegex = /^\d+$/;
-  if (formData.phone && !phoneRegex.test(formData.phone)) {
-    alert('Please enter a valid phone number.');
-    return;
+  // Construct the request body
+  const requestBody = {
+    name,
+    role,
+    employee_id,
+    email,
+    position,
+    report_to,
+    birthdate,
+    join_date
+  };
+
+  try {
+    // Make API call to update employee
+    console.log('Form Data:', requestBody);
+    const response = await fetch(`http://localhost:3001/editEmployee/${profileId}`, { // Include profileId in the URL
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+    console.log('Response:', response);
+    if (response.ok) {
+      window.location.reload();
+      setFormData({
+        name: '',
+        role: '',
+        employee_id: '',
+        email: '',
+        position: '',
+        report_to: '',
+        birthdate: '',
+        join_date: '',
+      });
+    } else {
+      // Error updating employee
+      alert('Failed to update employee. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error updating employee:', error);
+    alert('An error occurred while updating employee. Please try again.');
   }
+};
 
-  // Additional validation logic can be added here
 
-  // If validation passes, proceed with form submission
-  console.log('Form submitted:', formData);
-  // Here, you can make an API call to submit the form data or perform any other necessary actions
 
-  setFormClosed(true);
+  const handleDateChange = (date, fieldName) => {
+  setFormData({
+    ...formData,
+    [fieldName]: date
+  });
+};
+
+ 
+
+
+  useEffect(() => {
+  const fetchUserData = async () => {
+    try {
+      if (!profileId) {
+        return; // Exit early if profileId is null or undefined
+      }
+      const response = await fetch(`http://localhost:3001/profile/${profileId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch user data");
+      }
+      const userData = await response.json();
+
+      // Set the formData state, including the report_to field
+      setFormData({
+        ...userData,
+        report_to: userData.report_to // Ensure report_to is set correctly
+      });
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
   };
 
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
+  fetchUserData();
+}, [profileId]);
+
+
+useEffect(() => {
+  const fetchAllUsers = async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/users`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch user data");
+      }
+      const allUsers = await response.json();
+      setUsers(allUsers);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
   };
+
+  fetchAllUsers();
+}, []);
 
 
   return (
@@ -313,7 +160,7 @@ const Editemployee = () => {
           role="document">
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title">Add Employee</h5>
+              <h5 className="modal-title">Edit Employee</h5>
               <button
                 type="button"
                 className="btn-close"
@@ -323,48 +170,46 @@ const Editemployee = () => {
               </button>
             </div>
             <div className="modal-body">
-              <form>
+              <form onSubmit={handleSubmit}>
                 <div className="row">
                   <div className="col-sm-6">
                     <div className="input-block">
                       <label className="col-form-label">
-                        Full Name <span className="text-danger">*</span>
+                        Full Name 
                       </label>
                       <input 
-                        className={`form-control ${isTyping && formData.fullName.trim() !== '' ? 'is-valid' : 'is-invalid'}`}
+                        className={`form-control`}
                         type="text"
-                        name="fullName"
-                        value={formData.fullName}
+                        name="name"
+                        value={formData.name}
                         onChange={handleChange}
-                        required 
                       />
                     </div>
                   </div>
                   <div className="col-sm-6">
                     <div className="input-block">
                       <label className="col-form-label">
-                        Role<span className="text-danger">*</span>
+                        Role
                       </label>
                       <input 
-                        className={`form-control ${isTyping && formData.role.trim() !== '' ? 'is-valid' : 'is-invalid'}`} 
+                        className={`form-control`} 
                         type="text" 
                         name="role"
                         value={formData.role}
                         onChange={handleChange}
-                        required 
                       />
                     </div>
                   </div>
                   <div className="col-sm-6">
                     <div className="input-block">
                       <label className="col-form-label">
-                        Employee ID<span className="text-danger">*</span>
+                        Employee ID
                       </label>
                       <input 
-                        className={`form-control ${isTyping && formData.employeeID.trim() !== '' ? 'is-valid' : 'is-invalid'}`}
+                        className={`form-control `}
                         type="text" 
-                        name="employeeID"
-                        value={formData.employeeID}
+                        name="employee_id"
+                        value={formData.employee_id}
                         onChange={handleChange}
                         required 
                       />
@@ -373,7 +218,7 @@ const Editemployee = () => {
                   <div className="col-sm-6">
                     <div className="input-block">
                       <label className="col-form-label">
-                        Email <span className="text-danger">*</span>
+                        Email 
                       </label>
                       <input 
                         className={`form-control ${formData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) ? 'is-valid' : 'is-invalid'}`}  
@@ -388,18 +233,18 @@ const Editemployee = () => {
                   <div className="col-sm-6">
                     <div className="input-block">
                       <label className="col-form-label">
-                        Position<span className="text-danger">*</span>
+                        Position
                       </label>
                       <select 
-                         className={`form-control ${isTyping && formData.position.trim() !== '' ? 'is-valid' : 'is-invalid'}`} 
+                         className={`form-control `} 
                          name="position"
                          value={formData.position}
                          onChange={handleChange}
                          required 
                        >
                         <option value="">Select a position</option>
-                        <option value="Team Leader">Manager</option>
-                        <option value="Manager">Team Leader</option>
+                        <option value="Team Leader">Team Leader</option>
+                        <option value="Manager">Manager</option>
                         <option value="Employee">Employee</option>
                       </select>
                     </div>
@@ -407,12 +252,12 @@ const Editemployee = () => {
                   <div className="col-sm-6">
                     <div className="input-block">
                       <label className="col-form-label">
-                        Report To<span className="text-danger">*</span>
+                        Report To
                       </label>
                       <select 
-                         className={`form-control ${isTyping && formData.reportTo.trim() !== '' ? 'is-valid' : 'is-invalid'}`} 
-                         name="reportTo"
-                         value={formData.reportTo}
+                         className={`form-control `} 
+                         name="report_to"
+                         value={formData.report_to}
                          onChange={handleChange}
                          required 
                        >
@@ -431,15 +276,14 @@ const Editemployee = () => {
                   <div className="col-sm-6">
                     <div className="input-block">
                       <label className="col-form-label">
-                        Birth Date <span className="text-danger">*</span>
+                        Birth Date 
                       </label>
                       <div className="cal-icon">
                         <DatePicker
-                          selected={formData.birthDate}
-                          onChange={(date) => handleChange({ target: { name: 'birthDate', value: date } })}
-                          className={`form-control datetimepicker ${formData.birthDate ? 'is-valid' : ''}`}
+                          selected={formData.birthdate ? new Date(formData.birthdate) : null}
+                          onChange={(date) => handleDateChange(date, 'birthdate')}
+                          className={`form-control datetimepicker ${formData.birthdate ? 'is-valid' : ''}`}
                           dateFormat="yyyy-MM-dd"
-                          required
                         />
                       </div>
                     </div>
@@ -447,15 +291,14 @@ const Editemployee = () => {
                   <div className="col-sm-6">
                     <div className="input-block">
                       <label className="col-form-label">
-                        Joining Date <span className="text-danger">*</span>
+                        Joining Date 
                       </label>
                       <div className="cal-icon">
                         <DatePicker
-                          selected={formData.joiningDate}
-                          onChange={(date) => handleChange({ target: { name: 'joiningDate', value: date } })}
-                          className={`form-control datetimepicker ${formData.joiningDate ? 'is-valid' : ''}`}
+                          selected={formData.join_date ? new Date(formData.join_date) : null}
+                          onChange={(date) => handleDateChange(date, 'join_date')}
+                          className={`form-control datetimepicker ${formData.join_date ? 'is-valid' : ''}`}
                           dateFormat="yyyy-MM-dd"
-                          required
                         />
                       </div>
                     </div>

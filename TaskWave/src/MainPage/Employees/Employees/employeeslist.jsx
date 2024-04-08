@@ -1,5 +1,3 @@
-/* eslint-disable no-undef */
-
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { Link } from "react-router-dom";
@@ -21,20 +19,19 @@ import Header from "../../../initialpage/Sidebar/header";
 import Sidebar from "../../../initialpage/Sidebar/sidebar";
 import Offcanvas from "../../../Entryfile/offcanvance";
 
-const Employeeslist = ({users}) => {
+const Employeeslist = ( ) => {
 
   
   const [menu, setMenu] = useState(false);
   const [focused, setFocused] = useState(false);
   const [focused1, setFocused1] = useState(false);
-
-
+  const [users, setUsers] = useState([]);
   const [nameInput, setNameInput] = useState('');
   const [searchId, setSearchId] = useState('');
   const [searchRole, setSearchRole] = useState('');
 
 
-    const handleNameInputChange = (e) => {
+  const handleNameInputChange = (e) => {
     setNameInput(e.target.value);
   };
 
@@ -80,14 +77,22 @@ const Employeeslist = ({users}) => {
 
  
 
-  useEffect(() => {
-    if ($(".select").length > 0) {
-      $(".select").select2({
-        minimumResultsForSearch: -1,
-        width: "100%",
-      });
-    }
-  });
+   useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/users");
+        if (!response.ok) {
+          throw new Error("Failed to fetch users");
+        }
+        const data = await response.json();
+        setUsers(data);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   const columns = [
     {
@@ -125,8 +130,9 @@ const Employeeslist = ({users}) => {
 
     {
       title: "Join Date",
-      dataIndex: "joindate",
-      sorter: (a, b) => a.joindate.length - b.joindate.length,
+      dataIndex: "join_date",
+      render: (joinDate) => new Date(joinDate).toLocaleDateString(),
+      sorter: (a, b) => new Date(a.join_date) - new Date(b.join_date),
     },
     {
       title: "Role",

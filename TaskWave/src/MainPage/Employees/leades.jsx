@@ -1,4 +1,4 @@
-  import React from "react";
+import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { Link } from "react-router-dom";
 import {
@@ -17,9 +17,29 @@ import { Table } from "antd";
 import { itemRender, onShowSizeChange } from "../paginationfunction";
 import "../antdstyle.css";
 
-const Leads = ({users}) => {
+const Leads = () => {
 
-  const users1 = users.filter(user => user.position === "Team Leader");
+    const [leads, setLeads] = useState([]);
+
+    const fetchLeads = async () => {
+     try {
+      const response = await fetch("http://localhost:3001/users");
+      if (response.ok) {
+        const data = await response.json();
+        // Filter users based on position
+        const leadsData = data.filter(user => user.position === "Team Leader");
+        setLeads(leadsData);
+      } else {
+        console.error("Failed to fetch leads:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error fetching leads:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchLeads();
+  }, []);
   
 
   const columns = [
@@ -53,93 +73,6 @@ const Leads = ({users}) => {
       render: (text) => <Link to="/app/projects/projects-view">{text}</Link>,
       sorter: (a, b) => a.project.length - b.project.length,
     },
-
-    {
-      title: "Assigned Staff",
-      dataIndex: "assignedstaff",
-      render: () => (
-        <ul className="team-members">
-          <li>
-            <Link to="#" title="John Doe" data-bs-toggle="tooltip">
-              <img alt="" src={Avatar_02} />
-            </Link>
-          </li>
-          <li>
-            <Link to="#" title="Richard Miles" data-bs-toggle="tooltip">
-              <img alt="" src={Avatar_09} />
-            </Link>
-          </li>
-          <li className="dropdown avatar-dropdown">
-            <Link
-              to="#"
-              className="all-users dropdown-toggle"
-              data-bs-toggle="dropdown"
-              aria-expanded="false">
-              +15
-            </Link>
-            <div className="dropdown-menu dropdown-menu-right">
-              <div className="avatar-group">
-                <Link className="avatar avatar-xs" to="#">
-                  <img alt="" src={Avatar_02} />
-                </Link>
-                <Link className="avatar avatar-xs" to="#">
-                  <img alt="" src={Avatar_09} />
-                </Link>
-                <Link className="avatar avatar-xs" to="#">
-                  <img alt="" src={Avatar_10} />
-                </Link>
-                <Link className="avatar avatar-xs" to="#">
-                  <img alt="" src={Avatar_05} />
-                </Link>
-                <Link className="avatar avatar-xs" to="#">
-                  <img alt="" src={Avatar_11} />
-                </Link>
-                <Link className="avatar avatar-xs" to="#">
-                  <img alt="" src={Avatar_12} />
-                </Link>
-                <Link className="avatar avatar-xs" to="#">
-                  <img alt="" src={Avatar_13} />
-                </Link>
-                <Link className="avatar avatar-xs" to="#">
-                  <img alt="" src={Avatar_01} />
-                </Link>
-                <Link className="avatar avatar-xs" to="#">
-                  <img alt="" src={Avatar_16} />
-                </Link>
-              </div>
-              <div className="avatar-pagination">
-                <ul className="pagination">
-                  <li className="page-item">
-                    <Link className="page-link" to="#" aria-label="Previous">
-                      <span aria-hidden="true">«</span>
-                      <span className="sr-only">Previous</span>
-                    </Link>
-                  </li>
-                  <li className="page-item">
-                    <Link className="page-link" to="#">
-                      1
-                    </Link>
-                  </li>
-                  <li className="page-item">
-                    <Link className="page-link" to="#">
-                      2
-                    </Link>
-                  </li>
-                  <li className="page-item">
-                    <Link className="page-link" to="#" aria-label="Next">
-                      <span aria-hidden="true">»</span>
-                      <span className="sr-only">Next</span>
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </li>
-        </ul>
-      ),
-    },
-    ,
-    
     
   ];
   return (
@@ -171,7 +104,7 @@ const Leads = ({users}) => {
               <Table
                 className="table-striped"
                 pagination={{
-                  total: users1.length,
+                  total: leads.length,
                   showTotal: (total, range) =>
                     `Showing ${range[0]} to ${range[1]} of ${total} entries`,
                   showSizeChanger: true,
@@ -181,7 +114,7 @@ const Leads = ({users}) => {
                 style={{ overflowX: "auto" }}
                 columns={columns}
                 // bordered
-                dataSource={users1}
+                dataSource={leads}
                 rowKey={(record) => record.id}
                 // onChange={console.log("change value")}
               />

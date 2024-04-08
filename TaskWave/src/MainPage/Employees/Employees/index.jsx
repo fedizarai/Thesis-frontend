@@ -18,8 +18,6 @@ import AllEmployees from './allemployees';
 import AllEmployeesList from './employeeslist';
 import Leades from './leades';
 
-import Department from './department';
-import Timesheet from './timesheet';
 
 
 const users = [
@@ -255,8 +253,6 @@ const EmployeesRoute = ({ match }) => (
           <Leades {...props} users={users} />
        )}
       />   
-      <Route path={`${match.url}/departments`} component={Department} />
-      <Route path={`${match.url}/timesheet`} component={Timesheet} />
    </Switch>
 );
 

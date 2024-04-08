@@ -10,7 +10,7 @@ import Offcanvas from "../../../Entryfile/offcanvance";
 
 
 
-const EmployeeCard = ({ employee,onDeleteClick }) =>  {
+const EmployeeCard = ({ employee,onDeleteClick,onEditClick  }) =>  {
 
   const { id, name,role,image,employee_id} = employee;
 
@@ -36,6 +36,7 @@ const EmployeeCard = ({ employee,onDeleteClick }) =>  {
                       <Link
                         className="dropdown-item"
                         to="#"
+                        onClick={() => onEditClick(id)}
                         data-bs-toggle="modal"
                         data-bs-target="#edit_employee">
                         <i className="fa fa-pencil m-r-5" /> Edit
@@ -43,6 +44,7 @@ const EmployeeCard = ({ employee,onDeleteClick }) =>  {
                       <Link
                         className="dropdown-item"
                         to="#"
+                        onClick={() => onDeleteClick(id)}
                         data-bs-toggle="modal"
                         data-bs-target="#delete_employee"
                          

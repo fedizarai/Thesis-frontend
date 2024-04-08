@@ -4,11 +4,6 @@ import { Helmet } from "react-helmet";
 import { useSelector } from "react-redux";
 import { Link,useParams } from "react-router-dom";
 import {
- Avatar_16,
-  Avatar_02,
-  Avatar_09,
-  Avatar_10,
-  Avatar_11,
   Avatar_01,
   Diagram,
   PlaceHolder,
@@ -19,20 +14,34 @@ import Offcanvas from "../../../Entryfile/offcanvance";
 import ProjectCard from "../../Employees/Projects/ProjectCard";
 
 const EmployeeProfile = () => {
-
+  
+  const [loginError, setLoginError] = useState("");
   const [selectedDate, setSelectedDate] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [formClosed, setFormClosed] = useState(false);
+  const [profileData, setProfileData] = useState(null);
+  const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState({
-    fullName: '',
+    name: '',
     username: '',
     email: '',
+    gender: '',
     mobile: '',
     birthDate: '',
-    adress: '',
+    address: '',
+    image: '',
   });
   
   const { profileId } = useParams();
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+    return date.toLocaleDateString('en-US', options);
+};
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+
 
 
   const handleChange = (e) => {
@@ -44,7 +53,68 @@ const EmployeeProfile = () => {
     setIsTyping(true);
   };
 
-  const allprojects  = [
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      setFormData({
+        ...formData,
+        image: reader.result, 
+      });
+    };
+
+    if (file) {
+      reader.readAsDataURL(file);
+    }
+  };  
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    let updatedFields = {};
+
+    for (const key in formData) {
+        if (formData[key] !== profileData[key]) {
+            updatedFields[key] = formData[key];
+        }
+    }
+
+    const payload = {
+        ...updatedFields,
+        id: profileId, 
+    };
+
+    try {
+        const response = await fetch('http://localhost:3001/update-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.text();
+            console.log("Error response from server:", errorData);
+            if (response.status === 409 && errorData.error === "Email already exists") {
+                console.log("Email already exists. Setting loginError state.");
+                setLoginError("Email already exists. Please use a different email.");
+            } else {
+                throw new Error(errorData.message || 'Network response was not ok');
+            }
+        } else {
+            const data = await response.json();
+            window.location.reload();
+        }
+    } catch (error) {
+        console.error('Profile update failed:', error);
+        alert(`Profile update failed: ${error.message}`);
+    }
+};
+
+
+
+ const allprojects  = [
  {
   id: 1,
   title: 'Office Management',
@@ -75,7 +145,7 @@ const EmployeeProfile = () => {
   team: [
     { name: 'John Doe', role: 'Web Developer',image: Avatar_01 },
     { name: 'Jane Smith', role: 'Web Designer' ,image: Avatar_01},
-    { name: 'Alice Johnson', role: 'Ios Developer',image: Avatar_01}
+    { name: 'Jeffrey Wardene  ', role: 'Ios Developer',image: Avatar_01}
   ],
   priority:'High',
   activeStatus:'Pending',
@@ -127,7 +197,7 @@ const EmployeeProfile = () => {
   team: [
     { name: 'John Doe', role: 'Web Developer',image: Avatar_01 },
     { name: 'Jane Smith', role: 'Web Designer' ,image: Avatar_01},
-    { name: 'Lesley Grauer', role: 'Web Designer' ,image: Avatar_01},
+    { name: 'Wilmer Delunae', role: 'Web Designer' ,image: Avatar_01},
     { name: 'Alice Johnson', role: 'Ios Developer',image: Avatar_01}
   ],
   priority:'Medium',
@@ -172,7 +242,7 @@ const EmployeeProfile = () => {
   team: [
     { name: 'John Doe', role: 'Web Developer' ,image: Avatar_01},
     { name: 'Jane Smith', role: 'Web Designer' ,image: Avatar_01},
-    { name: 'Alice Johnson', role: 'Ios Developer',image: Avatar_01}
+    { name: 'Wilmer Delunae', role: 'Ios Developer',image: Avatar_01}
   ],
   priority:'High',
   activeStatus:'Pending',
@@ -417,221 +487,6 @@ const EmployeeProfile = () => {
 }]
 
 
- const users = [
-    {
-      id: 1,
-      image: Avatar_01,
-      name: "John Doe",
-      username: "John 2023",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      role: "Web Designer",
-      employee_id: "FT-0001",
-      email: "johndoe@example.com",
-      mobile: "9876543210",
-      joindate: "1 Jan 2013",
-      project: "Hospital Administration",
-      position: "Team Leader",
-
-
-    },
-    {
-      id: 2,
-      image: Avatar_01,
-      name: "Richard Miles",
-      username: "Richard 2024",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      role: "Web Developer",
-      employee_id: "FT-0002",
-      email: "richardmiles@example.com",
-      mobile: "9876543210",
-      joindate: "18 Mar 2014",
-      project: "Video Calling App",
-      position: "Team Leader",
-
-    },
-    {
-      id: 3,
-      image: Avatar_01,
-      name: "John Smith",
-      username:"John 2024",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      role: "Android Developer",
-      employee_id: "FT-0003",
-      email: "johnsmith@example.com ",
-      mobile: "9876543210",
-      joindate: "1 Apr 2014",
-      project: "Hospital Administration",
-      position: "Manager",
-    },
-    {
-      id: 4,
-      image: Avatar_01,
-      name: "Mike Litorus",
-      username: +"Mike 2019",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      role: "IOS Developer",
-      employee_id: "FT-0004",
-      email: "mikelitorus@example.com",
-      mobile: "9876543210",
-      joindate: "1 Apr 2014",
-      project: "Office Management",
-      position: "Manager",
-    },
-    {
-      id: 5,
-      image: Avatar_01,
-      name: "Wilmer Deluna",
-      username:"Wilmer 1920",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      role: "Team Leader",
-      employee_id: "FT-0005",
-      email: "wilmerdeluna@example.com",
-      mobile: "9876543210",
-      joindate: "22 May 2014",
-      project: "Hospital Administration",
-      position: "Employee",
-    },
-    {
-      id: 6,
-      image: Avatar_01,
-      name: "Jeffrey Warden",
-      username:"Jeffrey 2018",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      role: "Web Developer",
-      employee_id: "FT-0006",
-      email: "jeffreywarden@example.com",
-      mobile: "9876543210",
-      joindate: "16 Jun 2013",
-      project: "Video Calling App",
-      position: "Employee",
-    },
-    {
-      id: 7,
-      image: Avatar_01,
-      name: "Bernardo Galaviz",
-      username: "Bernardo 1998",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      role: "Web Developer",
-      employee_id: "FT-0007",
-      email: "bernardogalaviz@example.com",
-      mobile: "9876543210",
-      joindate: "1 Jan 2013",
-      project: "Hospital Administration",
-      position: "Team Leader",
-    },
-    {
-      id: 8,
-      image: Avatar_01,
-      name: "Lesley Grauer",
-      username: "Lesley 2015",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      role: "Team Leader",
-      employee_id: "FT-0008",
-      email: "bernardogalaviz@example.com",
-      mobile: "9876543210",
-      joindate: "1 Jan 2013",
-      project: "Video Calling App",
-      position: "Team Leader",
-    },
-    {
-      id: 9,
-      image: Avatar_01,
-      name: "Jeffery Lalor",
-      username: "Jeffery 2024",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      role: "Web Developer",
-      employee_id: "FT-0009",
-      email: "bernardogalaviz@example.com",
-      mobile: "9876543210",
-      joindate: "1 Jan 2013",
-      project: "Hospital Administration",
-      position: "Employee",
-    },
-    {
-      id: 10,
-      image: Avatar_01,
-      name: "John Doe",
-      username: "John 2016",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      role: "IOS Developer  ",
-      employee_id: "FT-0010",
-      email: "bernardogalaviz@example.com",
-      mobile: "9876543210",
-      joindate: "1 Jan 2013",
-      project: "Office Management",
-      position: "Employee",
-
-    },
-     {
-      id: 11,
-      image: Avatar_01,
-      name: "zarai fedi",
-      username: "fedy 1920",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      role: "IOS Developer  ",
-      employee_id: "FT-0011",
-      email: "bernardogalaviz@example.com",
-      mobile: "9876543210",
-      joindate: "1 Jan 2013",
-      project: "Video Calling App",
-      position: "Employee",
-    },
-     {
-      id: 12,
-      image: Avatar_01,
-      name: "Jeffery Lalor",
-      username: name+" 2024",
-      birthdate: "24th July 1998",
-      Gender: "Male",
-      reportTo: "Jeffery Lalor",
-      adress: "1861 Bayonne Ave, Manchester Township, NJ, 08759",
-      role: "IOS Developer  ",
-      employee_id: "FT-0012",
-      email: "bernardogalaviz@example.com",
-      mobile: "9876543210",
-      joindate: "1 Jan 2013",
-      project: "Office Management",
-      position: "Employee",
-    },
-  ];
-
-
-  const profileDetails = users.find((user) => user.id === parseInt(profileId, 10));
-
-
   const projects = allprojects.filter(project => {
       if (Array.isArray(project.team)) {
         for (const member of project.team) {
@@ -654,26 +509,77 @@ const EmployeeProfile = () => {
     return null; // Return null if no user found with the given id
 }
 
+const findUserIdByName = (name) => {
+  const user = users.find((user) => user.name === name);
+  return user ? user.id : null;
+};
+
+const findImageByName = (name) => {
+  const user = users.find((user) => user.name === name);
+  return user ? user.image : null;
+};
+
+
   const { loginvalue } = useSelector((state) => state.user);
   const UserName = loginvalue?.email?.split("@")[0];
   const ProfileName = UserName?.charAt(0).toUpperCase() + UserName?.slice(1);
 
 
-  useEffect(() => {
-    if ($(".select").length > 0) {
-      $(".select").select2({
-        minimumResultsForSearch: -1,
-        width: "100%",
-      });
-    }
-  });
+useEffect(() => {
+  // Fetch profile data
+  fetch(`http://localhost:3001/profile/${profileId}`)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      setProfileData(data);
+      // Fetch all user data
+      fetch('http://localhost:3001/users')
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Failed to fetch user data");
+          }
+          return response.json();
+        })
+        .then((userData) => {
+          // Set the retrieved user data
+          setUsers(userData);
+        })
+        .catch((error) => console.error("Error fetching user data:", error));
+    })
+    .catch((error) => console.error("There was a problem with fetch operation:", error));
+}, [profileId]);
+
+
+useEffect(() => {
+  if (profileData) {
+    setFormData({
+      name: profileData.name || '',
+      username: profileData.username || '',
+      email: profileData.email || '',
+      gender: profileData.gender || '',
+      mobile: profileData.mobile || '',
+      birthDate: profileData.birthdate ? profileData.birthdate.split('T')[0] : '', // Assuming birthDate is in ISO format
+      address: profileData.address || '',
+      image: profileData.image || "",
+    });
+  }
+}, [profileData]);
+
+if (!profileData) {
+  return <div>Loading...</div>;
+}
+
 
 
   return (
     <>
       <div className="page-wrapper">
         <Helmet>
-          <title>Employee Profile</title>
+          <title>{profileData.name}'s Profile</title>
           <meta name="description" content="Reactify Blank Page" />
         </Helmet>
         {/* Page Content */}
@@ -705,7 +611,7 @@ const EmployeeProfile = () => {
                     <div className="profile-img-wrap">
                       <div className="profile-img">
                         <Link to="#">
-                          <img alt="img" src={Avatar_01} />
+                          <img alt="img" src={profileData.image}  />
                         </Link>
                       </div>
                     </div>
@@ -714,15 +620,15 @@ const EmployeeProfile = () => {
                         <div className="col-md-5">
                           <div className="profile-info-left">
                             <h3 className="user-name m-t-0 mb-0">
-                              {profileDetails.name}
+                              {profileData.name}
                             </h3>
-                            <h4 className="text-muted">{profileDetails.role}</h4>
-                            <h5 className="text-muted">{profileDetails.position}</h5>
+                            <h4 className="text-muted">{profileData.role}</h4>
+                            <h5 className="text-muted">{profileData.position}</h5>
                             <div className="staff-id">
-                              Employee ID : {profileDetails.employee_id}
+                              Employee ID : {profileData.employee_id}
                             </div>
                             <div className="small doj text-muted">
-                              Date of Join : {profileDetails.joindate}
+                              Date of Join : {profileData.join_date ? formatDate(profileData.join_date) : ''}
                             </div>
                             <div className="staff-msg">
                               <Link
@@ -741,47 +647,47 @@ const EmployeeProfile = () => {
                             <li>
                               <div className="title">Phone:</div>
                               <div className="text">
-                                <Link to="#">{profileDetails.mobile}</Link>
+                                <Link to="#">{profileData.mobile}</Link>
                               </div>
                             </li>
                             <li>
                               <div className="title">Email:</div>
                               <div className="text">
                                 <Link to="#">
-                                  {profileDetails.email}
+                                  {profileData.email}
                                 </Link>
                               </div>
                             </li>
                             <li>
                               <div className="title">Username:</div>
                               <div className="text">
-                                <Link to="#">{profileDetails.username}</Link>
+                                <Link to="#">{profileData.username}</Link>
                               </div>
                             </li>
                             <li>
                               <div className="title">Birthday:</div>
-                              <div className="text">{profileDetails.birthdate}</div>
+                              <div className="text">{profileData.birthdate ? formatDate(profileData.birthdate) : ''}</div>
                             </li>
                             <li>
                               <div className="title">Address:</div>
                               <div className="text">
-                                {profileDetails.adress}
+                                {profileData.address}
                               </div>
                             </li>
                             <li>
                               <div className="title">Gender:</div>
-                              <div className="text">{profileDetails.Gender}</div>
+                              <div className="text">{profileData.gender}</div>
                             </li>
                             <li>
                               <div className="title">Reports to:</div>
                               <div className="text">
                                 <div className="avatar-box">
                                   <div className="avatar avatar-xs">
-                                    <img src={profileDetails.image} alt="img" />
+                                    <img src={findImageByName(profileData.report_to)} alt="img" />
                                   </div>
                                 </div>
-                                <Link to="/app/profile/employee-profile">
-                                  {profileDetails.reportTo}
+                                <Link to={`/app/profile/employee-profile/${findUserIdByName(profileData.report_to)}`}>
+                                  {profileData.report_to}
                                 </Link>
                               </div>
                             </li>
@@ -954,18 +860,23 @@ const EmployeeProfile = () => {
                 </button>
               </div>
               <div className="modal-body">
-                <form>
+                <form onSubmit={handleSubmit}>
                   <div className="row">
                     <div className="col-md-12">
                       <div className="profile-img-wrap edit-img">
                         <img
                           className="inline-block"
-                          src={Avatar_02}
+                          src={formData.image || profileData.image}
                           alt="user"
                         />
                         <div className="fileupload btn">
                           <span className="btn-text">edit</span>
-                          <input className="upload" type="file" />
+                          <input 
+                             className="upload" 
+                             type="file" 
+                             accept="image/*"
+                             onChange={(e) => handleImageUpload(e)}
+                          />
                         </div>
                       </div>
                       <div className="row">
@@ -973,10 +884,10 @@ const EmployeeProfile = () => {
                           <div className="input-block">
                             <label>Full Name</label>
                             <input
-                              className={`form-control ${isTyping && formData.fullName.trim() !== '' ? 'is-valid' : 'is-invalid'}`}
+                              className="form-control"
                               type="text"
-                              name="fullName"
-                              value={formData.fullName}
+                              name="name"
+                              value={formData.name}
                               onChange={handleChange}
                              
                               
@@ -989,6 +900,9 @@ const EmployeeProfile = () => {
                             <input
                               type="text"
                               className="form-control"
+                              name="username"
+                              value={formData.username}
+                              onChange={handleChange}
                               
                             />
                           </div>
@@ -1000,6 +914,9 @@ const EmployeeProfile = () => {
                               <input
                                 className="form-control datetimepicker"
                                 type="date"
+                                name="birthDate"
+                                value={formData.birthDate}
+                                onChange={handleChange}
                                 
                               />
                             </div>
@@ -1007,11 +924,17 @@ const EmployeeProfile = () => {
                         </div>
                         <div className="col-md-6">
                           <div className="input-block">
-                            <label>Gender</label>
-                            <select className="select form-control">
-                              <option value="male selected">Male</option>
-                              <option value="female">Female</option>
-                            </select>
+                             <label>Gender</label>
+                             <select 
+                                name="gender" 
+                                value={formData.gender} 
+                                onChange={handleChange} 
+                                className="select form-control"
+                             >
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                             </select>
                           </div>
                         </div>
                         <div className="col-md-6">
@@ -1020,8 +943,11 @@ const EmployeeProfile = () => {
                             <input
                               type="text"
                               className="form-control"
-                              
+                              name="email"
+                              value={formData.email}
+                              onChange={handleChange}                              
                             />
+                           
                           </div>
                         </div>
                         <div className="col-md-6">
@@ -1030,6 +956,9 @@ const EmployeeProfile = () => {
                             <input
                               type="text"
                               className="form-control"
+                              name="mobile"
+                              value={formData.mobile}
+                              onChange={handleChange}
                               
                             />
                           </div>
@@ -1046,14 +975,17 @@ const EmployeeProfile = () => {
                         <input
                           type="text"
                           className="form-control"
-                          defaultValue="4487 Snowbird Lane"
+                          name="address"
+                          value={formData.address}
+                          onChange={handleChange}
                         />
                       </div>
                     </div>
                     
                   </div>
                   <div className="submit-section">
-                    <button className="btn btn-primary submit-btn">
+                    {loginError && <div className="alert alert-danger">{loginError}</div>}
+                    <button  className="btn btn-primary submit-btn">
                       Submit
                     </button>
                   </div>
