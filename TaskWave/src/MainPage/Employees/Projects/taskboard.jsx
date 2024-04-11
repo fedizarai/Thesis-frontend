@@ -75,7 +75,7 @@ const TaskBoard = ({projects}) => {
                   </div>
                   <div className="kanban-wrap">
                    {projects
-                      .filter((project) => project.activeStatus === 'Pending')
+                      .filter((project) => project.activestatus === 'Pending')
                       .map((project, index) => (
                         <div className="card panel">
                       <div className="kanban-box">
@@ -101,7 +101,7 @@ const TaskBoard = ({projects}) => {
                           <div className="kanban-footer">
                             <span className="task-info-cont">
                               <span className="task-date">
-                                <i className="fa fa-clock-o" /> {project.deadline}
+                                <i className="fa fa-clock-o" /> {new Date(project.deadline).toLocaleDateString()}
                               </span>
                               <div className="btn-group">
                               <Link
@@ -134,7 +134,7 @@ const TaskBoard = ({projects}) => {
                             </span>
                             <span className="task-users">
                               <img
-                                src={Avatar_12}
+                                src={project.leadername.image}
                                 className="task-avatar"
                                 width={24}
                                 height={24}
@@ -153,7 +153,7 @@ const TaskBoard = ({projects}) => {
                   </div>
                   <div className="kanban-wrap">
                    {projects
-                      .filter((project) => project.activeStatus === 'In Progress')
+                      .filter((project) => project.activestatus === 'In Progress')
                       .map((project, index) => (
                         <div className="card panel">
                       <div className="kanban-box">
@@ -179,7 +179,7 @@ const TaskBoard = ({projects}) => {
                           <div className="kanban-footer">
                             <span className="task-info-cont">
                               <span className="task-date">
-                                <i className="fa fa-clock-o" /> {project.deadline}
+                                <i className="fa fa-clock-o" /> {new Date(project.deadline).toLocaleDateString()}
                               </span>
                               <div className="btn-group">
                               <Link
@@ -212,7 +212,7 @@ const TaskBoard = ({projects}) => {
                             </span>
                             <span className="task-users">
                               <img
-                                src={Avatar_12}
+                                src={project.leadername.image}
                                 className="task-avatar"
                                 width={24}
                                 height={24}
@@ -231,7 +231,7 @@ const TaskBoard = ({projects}) => {
                   </div>
                   <div className="kanban-wrap">
                    {projects
-                      .filter((project) => project.activeStatus === 'Completed')
+                      .filter((project) => project.activestatus === 'Completed')
                       .map((project, index) => (
                         <div className="card panel">
                       <div className="kanban-box">
@@ -257,7 +257,7 @@ const TaskBoard = ({projects}) => {
                           <div className="kanban-footer">
                             <span className="task-info-cont">
                               <span className="task-date">
-                                <i className="fa fa-clock-o" /> {project.deadline}
+                                <i className="fa fa-clock-o" /> {new Date(project.deadline).toLocaleDateString()}
                               </span>
                               <div className="btn-group">
                               <Link
@@ -290,7 +290,7 @@ const TaskBoard = ({projects}) => {
                             </span>
                             <span className="task-users">
                               <img
-                                src={Avatar_12}
+                                src={project.leadername.image}
                                 className="task-avatar"
                                 width={24}
                                 height={24}

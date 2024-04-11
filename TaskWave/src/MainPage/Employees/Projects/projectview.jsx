@@ -23,23 +23,37 @@ import Editproject from "../../../_components/modelbox/Editproject";
 import Offcanvas from "../../../Entryfile/offcanvance";
 
 const ProjectView = ({ projects }) => {
-
-  const { taskId } = useParams();
-
+   const { taskId } = useParams();
   const [selectedDate, setSelectedDate] = useState(new Date());
- 
-  const [taskDetails, setTaskDetails] = useState(() => projects.find((project) => project.id === parseInt(taskId, 10)));
-
-  const numberOfCompletedTasks = taskDetails.tasks.filter(task => task.status === 2).length;
-
-  const numberOfOpenTasks = taskDetails.tasks.length;
-
-  const progress=Math.round((numberOfCompletedTasks / numberOfOpenTasks) * 100);
-
+  const [taskDetails, setTaskDetails] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
-
   const [showModal, setShowModal] = useState(false);
 
+  useEffect(() => {
+    if (projects && taskId) {
+      const foundTask = projects.find((project) => project.id === parseInt(taskId, 10));
+      if (foundTask) {
+        setTaskDetails(foundTask);
+      }
+    }
+  }, [projects, taskId]);
+
+  if (!taskDetails) {
+    return null; // Render nothing if taskDetails is not available yet
+  }
+
+  // Calculate number of completed tasks
+  const numberOfCompletedTasks = taskDetails.tasks.filter(task => task.status === 2).length;
+
+  // Calculate number of open tasks
+  const numberOfOpenTasks = taskDetails.tasks.length;
+
+  // Calculate progress
+  const progress = Math.round((numberOfCompletedTasks / numberOfOpenTasks) * 100);
+
+
+  
+  
   const fileIcons = {
     pdf: faFilePdf,
     jpg: faFileImage,
@@ -96,14 +110,9 @@ const ProjectView = ({ projects }) => {
   };
 
 
-  useEffect(() => {
-    if ($(".select").length > 0) {
-      $(".select").select2({
-        minimumResultsForSearch: -1,
-        width: "100%",
-      });
-    }
-  });
+
+
+ 
 
 
   return (
@@ -168,7 +177,7 @@ const ProjectView = ({ projects }) => {
               <div className="card-body">
                 <h5 className="card-title m-b-20">Uploaded image files</h5>
                 <div className="row">
-                  {taskDetails.imageFiles.map((file, index) => (
+                  {taskDetails.files.filter(file => /\.(jpg|jpeg|png|gif)$/i.test(file.name)).map((file, index) => (
                     <div key={index} className="col-md-3 col-sm-4 col-lg-4 col-xl-3">
                       <div className="uploaded-box" onClick={() => handleImageClick(file)}>
                         <div className="uploaded-img">
@@ -254,7 +263,7 @@ const ProjectView = ({ projects }) => {
               <div className="card-body">
                 <h5 className="card-title m-b-20">Uploaded files</h5>
                 <ul className="files-list">
-                 {taskDetails.uploadedFiles.map((file, index) => (
+                 {taskDetails.files.filter(file => !/\.(jpg|jpeg|png|gif)$/i.test(file.name)).map((file, index) => (
                   <li>
                     <div className="files-cont">
                       <div className="file-type">
@@ -459,7 +468,8 @@ const ProjectView = ({ projects }) => {
                                            <div className="task-head-title">
                                               Due Date
                                            </div>
-                                           <div className="due-date">{task.deadline}</div>
+                                           <div className="due-date">{new Date(task.deadline).toLocaleDateString()}</div>
+
                                          </div>
                                        </Link>
                                        <span className="remove-icon">
@@ -570,15 +580,15 @@ const ProjectView = ({ projects }) => {
                     
                     <tr>
                       <td>Total Hours:</td>
-                      <td className="text-end">{taskDetails.workingHours} Hours</td>
+                      <td className="text-end">{taskDetails.workinghours} Hours</td>
                     </tr>
                     <tr>
                       <td>Created:</td>
-                      <td className="text-end">{taskDetails.startDate}</td>
+                      <td className="text-end">{new Date(taskDetails.startdate).toLocaleDateString()}</td>
                     </tr>
                     <tr>
                       <td>Deadline:</td>
-                      <td className="text-end">{taskDetails.deadline}</td>
+                      <td className="text-end">{new Date(taskDetails.deadline).toLocaleDateString()}</td>
                     </tr>
                     <tr>
                       <td>Priority:</td>
@@ -617,7 +627,7 @@ const ProjectView = ({ projects }) => {
                       <td>Created by:</td>
                       <td className="text-end">
                         <Link to="/app/profile/employee-profile">
-                          {taskDetails.creator}
+                          {taskDetails.creator_name}
                         </Link>
                       </td>
                     </tr>
@@ -639,7 +649,7 @@ const ProjectView = ({ projects }) => {
                                  : 'text-success'
                                       }`}
                                   />{' '}
-                                  {taskDetails.activeStatus}
+                                  {taskDetails.activestatus}
                           </Link>
                           <div className="dropdown-menu">
                             <Link className="dropdown-item" to="#">
@@ -685,13 +695,13 @@ const ProjectView = ({ projects }) => {
                       <div className="list-item">
                         <div className="list-left">
                           <span className="avatar">
-                            <img alt="" src={taskDetails.leaderName.image} />
+                            <img alt="" src={taskDetails.leadername.image} />
                           </span> 
                         </div>
                         <div className="list-body">
-                          <span className="message-author">{taskDetails.leaderName.name}</span>
+                          <span className="message-author">{taskDetails.leadername.name}</span>
                           <div className="clearfix" />
-                          <span className="message-content">{taskDetails.leaderName.role}</span>
+                          <span className="message-content">{taskDetails.leadername.role}</span>
                         </div>
                       </div>
                     </Link>

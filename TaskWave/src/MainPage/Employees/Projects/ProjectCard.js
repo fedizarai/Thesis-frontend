@@ -24,7 +24,7 @@ const ProjectCard = ({ project }) =>  {
 
   
 
-  const { id, title, leaderName, deadline,description ,team,tasks} = project;
+  const { id, title, leadername, deadline,description ,team,tasks} = project;
   
   const numberOfCompletedTasks = project.tasks.filter(task => task.status === 2).length;
 
@@ -79,7 +79,7 @@ const ProjectCard = ({ project }) =>  {
                   </p>
                   <div className="pro-deadline m-b-15">
                     <div className="sub-title">Deadline:</div>
-                    <div className="text-muted">{deadline}</div>
+                    <div className="text-muted">{new Date(deadline).toLocaleDateString()}</div>
                   </div>
                   <div className="project-members m-b-15">
                     <div>Project Leader :</div>
@@ -88,93 +88,23 @@ const ProjectCard = ({ project }) =>  {
                         <Link
                           to="#"
                           data-bs-toggle="tooltip"
-                          title={leaderName}>
-                          <img alt="" src={Avatar_16} />
+                          title={leadername}>
+                          <img alt="img" src={leadername.image} />
                         </Link>
                       </li>
                     </ul>
                   </div>
                   <div className="project-members m-b-15">
                     <div>Team :</div>
-                    <ul className="team-members"> 
-                      <li>
-                        <Link to="#" data-bs-toggle="tooltip" title="John Doe">
-                          <img alt="" src={Avatar_02} />
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          data-bs-toggle="tooltip"
-                          title="Richard Miles">
-                          <img alt="" src={Avatar_09} />
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          data-bs-toggle="tooltip"
-                          title="John Smith">
-                          <img alt="" src={Avatar_10} />
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          data-bs-toggle="tooltip"
-                          title="Mike Litorus">
-                          <img alt="" src={Avatar_05} />
-                        </Link>
-                      </li>
-                      <li className="dropdown avatar-dropdown">
-                        <Link
-                          to="#"
-                          className="all-users dropdown-toggle"
-                          data-bs-toggle="dropdown"
-                          aria-expanded="false">
-                          +1
-                        </Link>
-                        <div className="dropdown-menu dropdown-menu-right">
-                          <div className="avatar-group">
-                            <Link className="avatar avatar-xs" to="#">
-                              <img alt="" src={Avatar_02} />
-                            </Link>        
-                          </div>
-                          <div className="avatar-pagination">
-                            <ul className="pagination">
-                              <li className="page-item">
-                                <Link
-                                  className="page-link"
-                                  to="#"
-                                  aria-label="Previous">
-                                  <span aria-hidden="true">«</span>
-                                  <span className="sr-only">Previous</span>
-                                </Link>
-                              </li>
-                              <li className="page-item">
-                                <Link className="page-link" to="#">
-                                  1
-                                </Link>
-                              </li>
-                              <li className="page-item">
-                                <Link className="page-link" to="#">
-                                  2
-                                </Link>
-                              </li>
-                              <li className="page-item">
-                                <Link
-                                  className="page-link"
-                                  to="#"
-                                  aria-label="Next">
-                                  <span aria-hidden="true">»</span>
-                                  <span className="sr-only">Next</span>
-                                </Link>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </li>
-                    </ul>
+                     <ul className="team-members">
+                      {project.team.map((member, index) => (
+                        <li key={index}>
+                          <Link to="#" data-bs-toggle="tooltip" title={member.name}>
+                            <img alt={member.name} src={member.image} />
+                          </Link>
+                        </li>
+                      ))}
+                     </ul>
                   </div>
                   <p className="m-b-5">
                     Progress <span className="text-success float-end">{progress}%</span>
