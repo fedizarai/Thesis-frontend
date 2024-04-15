@@ -43,10 +43,11 @@ const ProjectView = ({ projects }) => {
   }
 
   // Calculate number of completed tasks
-  const numberOfCompletedTasks = taskDetails.tasks.filter(task => task.status === 2).length;
+ const numberOfCompletedTasks = taskDetails.tasks?.filter(task => task.status === 2)?.length ?? 0;
 
-  // Calculate number of open tasks
-  const numberOfOpenTasks = taskDetails.tasks.length;
+// Calculate number of open tasks
+const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
+
 
   // Calculate progress
   const progress = Math.round((numberOfCompletedTasks / numberOfOpenTasks) * 100);

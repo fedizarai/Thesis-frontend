@@ -26,9 +26,9 @@ const ProjectCard = ({ project }) =>  {
 
   const { id, title, leadername, deadline,description ,team,tasks} = project;
   
-  const numberOfCompletedTasks = project.tasks.filter(task => task.status === 2).length;
+  const numberOfCompletedTasks = project.tasks?.filter(task => task.status === 2)?.length || 0;
 
-  const numberOfOpenTasks = project.tasks.length;
+  const numberOfOpenTasks = project?.tasks?.length || 0;
 
   const progress=Math.round((numberOfCompletedTasks / numberOfOpenTasks) * 100);
 
@@ -75,7 +75,7 @@ const ProjectCard = ({ project }) =>  {
                     <span className="text-muted">tasks completed</span>
                   </small>
                   <p className="text-muted">
-                    {description.length > 100 ? description.slice(0, 100) + '...' : description}
+                    {description.length > 100 ? description.slice(0, 80) + '...' : description}
                   </p>
                   <div className="pro-deadline m-b-15">
                     <div className="sub-title">Deadline:</div>

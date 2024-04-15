@@ -102,3 +102,55 @@
   justify-content: center;
   align-items: center;
 }
+.position-relative {
+  position: relative;
+}
+
+/* Style for the delete button */
+.delete-member-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: transparent;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px;
+  margin: 5px; /* Add margin to create space between the button and the image */
+  transition: background-color 0.3s ease;
+}
+
+/* Style for the delete button hover state */
+.delete-member-button:hover {
+  background-color: rgba(255, 0, 0, 1);
+}
+
+.input-block .row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.input-block .row .col-md-5,
+.input-block .row .col-md-4,
+.input-block .row .col-md-3 {
+    flex: 1; /* Adjust the flex basis as per your design requirements */
+    padding: 5px;
+}
+
+.input-block .form-label {
+    margin-bottom: 0.5rem;
+}
+
+.input-block .form-control {
+    width: 100%; /* Ensures the input takes the full width of its container */
+}
+

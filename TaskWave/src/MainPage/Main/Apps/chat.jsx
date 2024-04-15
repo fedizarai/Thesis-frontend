@@ -13,7 +13,13 @@ import {
   Avatar_16,
 } from "../../../Entryfile/imagepath";
 
+import { io } from "socket.io-client";
+
+
 const Chat = () => {
+
+  const socket = io.connect("http://localhost:3001");
+
   const [windowDimension, detectHW] = useState({
     winWidth: window.innerWidth,
     winHeight: window.innerHeight,
@@ -40,6 +46,24 @@ const Chat = () => {
       }, 1000);
     }
   });
+
+  const [messages, setMessages] = useState([]);
+  const [text, setText] = useState("");
+
+  useEffect(() => {
+    socket.on("receive_message", (data) => {
+      //alert(data.text);
+      messages.push(data.text);
+    });
+  }, [socket]);
+
+  const onSubmit = (e) => {
+    socket.emit('onTextChange', {
+      text,
+      from: socket.id
+    });
+  };
+  console.log("messeages:" ,messages);
 
   return (
     <>
@@ -148,7 +172,34 @@ const Chat = () => {
                     <div className="chat-wrap-inner">
                       <div className="chat-box">
                         <div className="chats">
-                          <div className="chat chat-right">
+
+
+                    {messages.map((msg, index) => (
+                        <div className="chat chat-left">
+                            <div className="chat-avatar">
+                              <Link
+                                to="/app/profile/employee-profile"
+                                className="avatar">
+                                <img alt="" src={Avatar_05} />
+                              </Link>
+                            </div>
+                            <div className="chat-body">
+                              <div className="chat-bubble">
+                                <div className="chat-content">
+                                  
+                                  <p key={index}>
+                                   {msg}
+                                  </p>
+                                  <span className="chat-time">8:35 am</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                   ))}
+
+
+
+                          {/*<div className="chat chat-right">
                             <div className="chat-body">
                               <div className="chat-bubble">
                                 <div className="chat-content">
@@ -849,7 +900,10 @@ const Chat = () => {
                                 </div>
                               </div>
                             </div>
-                          </div>
+                          </div>*/}
+                        
+
+
                         </div>
                       </div>
                     </div>
@@ -870,10 +924,17 @@ const Chat = () => {
                           <textarea
                             className="form-control"
                             placeholder="Type message..."
-                            defaultValue={""}
+                            value={text} 
+                            onChange={(e) => setText(e.target.value)}
+                            
                           />
                           <span className="input-group-append">
-                            <button className="btn btn-custom" type="button">
+                            <button 
+                              className="btn btn-custom" 
+                              type="button"
+                              onClick={onSubmit}
+
+                              >
                               <i className="fa-solid fa-paper-plane" />
                             </button>
                           </span>
