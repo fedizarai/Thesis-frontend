@@ -20,7 +20,14 @@ const chatlayout = (props) => {
 
 				<div>
 					{chatService && chatService.map((route, key) =>
-						<Route key={key} path={`${match.url}/${route.path}`} component={route.component} />
+						<Route 
+						   key={key} 
+						   path={`${match.url}/${route.path}`} 
+						   render={(routeProps) => (
+                                <route.component {...routeProps} projectId={route.projectId} /> // Pass projectId as a prop
+                            )}
+
+						   />
 					)}
 				</div>
 				<Chatsidebar />

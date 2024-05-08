@@ -1,97 +1,55 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { withRouter } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { User, Avatar_02, Avatar_05, Avatar_09, Avatar_10 } from "../../Entryfile/imagepath"
 
-
 const Chatsidebar = () => {
+  const [projects, setProjects] = useState([]);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/projects');
+        if (!response.ok) {
+          throw new Error('Failed to fetch projects');
+        }
+        const projectsData = await response.json();
+        setProjects(projectsData);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+      }
+    };
+
+    fetchProjects();
+
+    return () => {
+      // Cleanup function if needed
+    };
+  }, []);
 
   return (
-    <>
-      <div className="sidebar" id="sidebar">
-        <div className="sidebar-inner slimscroll">
-          <div className="sidebar-menu">
-            <ul>
-              <li>
-                <Link onClick={() => localStorage.setItem("firstload", "true")} to="/app/main/dashboard"><i className="la la-home" /> <span>Back to Home</span></Link>
-              </li>
-              <li className="menu-title"><span>Chat Groups</span> <Link to="#" data-bs-toggle="modal" data-bs-target="#add_group"><i className="fa fa-plus" /></Link></li>
-              <li>
-                <Link onClick={() => localStorage.setItem("minheight", "true")} to="/conversation/chat">
-                  <span className="chat-avatar-sm user-img">
-                    <img className="rounded-circle" alt="" src={User} />
-                  </span>
-                  <span className="chat-user">#General</span>
+    <div className="sidebar" id="sidebar">
+      <div className="sidebar-inner slimscroll">
+        <div className="sidebar-menu">
+          <ul>
+            <li>
+              <Link onClick={() => localStorage.setItem("firstload", "true")} to="/app/main/dashboard"><i className="la la-home" /> <span>Back to Home</span></Link>
+            </li>
+            <li className="menu-title"><span>Chat Rooms</span></li>
+            {/* Mapping through projects */}
+            {projects.map(project => (
+              <li key={project.id}>
+                {/* Link to project chat room */}
+                <Link onClick={() => localStorage.setItem("minheight", "true")} to={`/conversation/chat/${project.id}`}>
+                  <span className="chat-user">{project.title}</span> {/* Display project name */}
                 </Link>
               </li>
-              <li>
-                <Link onClick={() => localStorage.setItem("minheight", "true")} to="/conversation/chat">
-                  <span className="chat-avatar-sm user-img">
-                    <img className="rounded-circle" alt="" src={User} />
-                  </span>
-                  <span className="chat-user">#Video Responsive Survey</span>
-                </Link>
-              </li>
-              <li>
-                <Link onClick={() => localStorage.setItem("minheight", "true")} to="/conversation/chat">
-                  <span className="chat-avatar-sm user-img">
-                    <img className="rounded-circle" alt="" src={User} />
-                  </span>
-                  <span className="chat-user">#500rs</span>
-                </Link>
-              </li>
-              <li>
-                <Link onClick={() => localStorage.setItem("minheight", "true")} to="/conversation/chat">
-                  <span className="chat-avatar-sm user-img">
-                    <img className="rounded-circle" alt="" src={User} />
-                  </span>
-                  <span className="chat-user">#warehouse</span>
-                </Link>
-              </li>
-              <li className="menu-title">Direct Chats <Link to="#" data-bs-toggle="modal" data-bs-target="#add_chat_user"><i className="fa fa-plus" /></Link></li>
-              <li>
-                <Link onClick={() => localStorage.setItem("minheight", "true")} to="/conversation/chat">
-                  <span className="chat-avatar-sm user-img">
-                    <img className="rounded-circle" alt="" src={Avatar_02} /><span className="status online" />
-                  </span>
-                  <span className="chat-user">John Doe</span> <span className="badge rounded-pill bg-danger">1</span>
-                </Link>
-              </li>
-              <li>
-                <Link onClick={() => localStorage.setItem("minheight", "true")} to="/conversation/chat">
-                  <span className="chat-avatar-sm user-img">
-                    <img className="rounded-circle" alt="" src={Avatar_09} /><span className="status offline" />
-                  </span>
-                  <span className="chat-user">Richard Miles</span> <span className="badge rounded-pill bg-danger">7</span>
-                </Link>
-              </li>
-              <li>
-                <Link onClick={() => localStorage.setItem("minheight", "true")} to="/conversation/chat">
-                  <span className="chat-avatar-sm user-img">
-                    <img className="rounded-circle" alt="" src={Avatar_10} /><span className="status away" />
-                  </span>
-                  <span className="chat-user">John Smith</span>
-                </Link>
-              </li>
-              <li className="active">
-                <Link onClick={() => localStorage.setItem("minheight", "true")} to="/conversation/chat">
-                  <span className="chat-avatar-sm user-img">
-                    <img className="rounded-circle" alt="" src={Avatar_05} /><span className="status online" />
-                  </span>
-                  <span className="chat-user">Mike Litorus</span> <span className="badge rounded-pill bg-danger">2</span>
-                </Link>
-              </li>
-            </ul>
-          </div>
+            ))}
+          </ul>
         </div>
       </div>
-
-    </>
-
-
+    </div>
   );
-
 }
 
 export default withRouter(Chatsidebar);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { withRouter } from "react-router-dom";
 import { User } from "../../../Entryfile/imagepath.jsx";
+import Cookies from 'js-cookie';
 
 import {
   BarChart,
@@ -14,6 +15,7 @@ import {
   Legend,
   Tooltip,
 } from "recharts";
+
 import Header from "../../../initialpage/Sidebar/header";
 import Sidebar from "../../../initialpage/Sidebar/sidebar";
 import Offcanvas from "../../../Entryfile/offcanvance/index.jsx";
@@ -22,30 +24,118 @@ import { Link } from "react-router-dom/cjs/react-router-dom.js";
 
 import RecentTable from "./Table/RecentTable.jsx";
 
-const barchartdata = [
-  { y: "2006", "Total Income": 100, "Total Outcome": 90 },
-  { y: "2007", "Total Income": 75, "Total Outcome": 65 },
-  { y: "2008", "Total Income": 50, "Total Outcome": 40 },
-  { y: "2009", "Total Income": 75, "Total Outcome": 65 },
-  { y: "2010", "Total Income": 50, "Total Outcome": 40 },
-  { y: "2011", "Total Income": 75, "Total Outcome": 65 },
-  { y: "2012", "Total Income": 100, "Total Outcome": 90 },
-];
-const linechartdata = [
-  { y: "2006", "Total Sales": 50, "Total Revenue": 90 },
-  { y: "2007", "Total Sales": 75, "Total Revenue": 65 },
-  { y: "2008", "Total Sales": 50, "Total Revenue": 40 },
-  { y: "2009", "Total Sales": 75, "Total Revenue": 65 },
-  { y: "2010", "Total Sales": 50, "Total Revenue": 40 },
-  { y: "2011", "Total Sales": 75, "Total Revenue": 65 },
-  { y: "2012", "Total Sales": 100, "Total Revenue": 50 },
-];
-const AdminDashboard = () => {
-  const [menu, setMenu] = useState(false);
+ const AdminDashboard = () => {
+ const [menu, setMenu] = useState(false);
+ const [users, setUsers] = useState([]);
+ const [projects, setProjects] = useState([]);
+ const [userName, setUserName] = useState('');
+ const [chartData, setChartData] = useState([]);
+ const [projectProgressData, setProjectProgressData] = useState([]);
 
   const toggleMobileMenu = () => {
     setMenu(!menu);
   };
+
+ const profileId = Cookies.get('userid');
+ // Calculate the total number of tasks
+const totalTasks = projects.reduce((total, project) => total + project.tasks.length, 0);
+
+// Calculate the count of tasks in each status
+const pendingTasks = projects.reduce((total, project) => {
+  return total + project.tasks.filter(task => task.status === 0).length;
+}, 0);
+
+const inProgressTasks = projects.reduce((total, project) => {
+  return total + project.tasks.filter(task => task.status === 1).length;
+}, 0);
+
+const completedTasks = projects.reduce((total, project) => {
+  return total + project.tasks.filter(task => task.status === 2).length;
+}, 0);
+
+// Calculate the percentages
+const pendingTaskPercentage = Math.round((pendingTasks / totalTasks) * 100);
+const inProgressTaskPercentage = Math.round((inProgressTasks / totalTasks) * 100);
+const completedTaskPercentage = Math.round((completedTasks / totalTasks) * 100);
+
+
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      // Fetch projects data
+      const projectsResponse = await fetch('http://localhost:3001/projects');
+      if (!projectsResponse.ok) {
+        throw new Error('Failed to fetch projects');
+      }
+      const projectsData = await projectsResponse.json();
+      setProjects(projectsData);
+
+      // Fetch users data
+      const usersResponse = await fetch("http://localhost:3001/users");
+      if (!usersResponse.ok) {
+        throw new Error("Failed to fetch users");
+      }
+      const usersData = await usersResponse.json();
+      setUsers(usersData);
+
+      // Generating chart data
+      const loadedChartData = projectsData.map(project => ({
+        y: project.title,
+        "Working Hours": project.workinghours,
+        "Number of Tasks": project.tasks.length // Assuming 'tasks' is an array of task objects
+      }));
+      setChartData(loadedChartData);
+
+      // Calculate project progress data
+      const progressData = projectsData.map(project => ({
+      year: project.startdate ? project.startdate.slice(0, 4) : 'Unknown', // Add null check for startDate
+      completedTasks: project.tasks.filter(task => task.status === 2).length, // Count completed tasks
+      totalTasks: project.tasks.length // Total tasks
+    }));
+      setProjectProgressData(progressData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  fetchData();
+}, []);
+
+
+   useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/users");
+        if (!response.ok) {
+          throw new Error("Failed to fetch users");
+        }
+        const data = await response.json();
+        setUsers(data);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchUsers();
+   }, []);
+
+   useEffect(() => {
+    const profileId = Cookies.get('userid');
+    console.log('userId', profileId);
+
+    // Find the user with the specified profile ID
+    const user = users.find(user => user.id === parseInt(profileId));
+    console.log('User:', user);
+
+    // Update the user name in state
+    if (user) {
+      // Split the full name by space and get the last part
+      const fullName = user.name;
+      const parts = fullName.split(' ');
+      const surname = parts[0];
+      setUserName(surname);
+    }
+  }, [users]);
 
   useEffect(() => {
     let firstload = localStorage.getItem("firstload");
@@ -56,6 +146,8 @@ const AdminDashboard = () => {
       }, 1000);
     }
   });
+
+
 
   return (
     <>
@@ -68,7 +160,7 @@ const AdminDashboard = () => {
             <div className="page-header">
               <div className="row">
                 <div className="col-sm-12">
-                  <h3 className="page-title">Welcome Admin!</h3>
+                  <h3 className="page-title">Welcome {userName}!</h3>
                   <ul className="breadcrumb">
                     <li className="breadcrumb-item active">Dashboard</li>
                   </ul>
@@ -84,7 +176,7 @@ const AdminDashboard = () => {
                       <i className="fa fa-cubes" />
                     </span>
                     <div className="dash-widget-info">
-                      <h3>112</h3>
+                      <h3>{projects.length}</h3>
                       <span>Projects</span>
                     </div>
                   </div>
@@ -97,7 +189,7 @@ const AdminDashboard = () => {
                       <i className="fa fa-usd" />
                     </span>
                     <div className="dash-widget-info">
-                      <h3>44</h3>
+                      <h3>{projects.filter(project => project.activestatus === 'Completed').length}</h3>
                       <span>Completed Projects</span>
                     </div>
                   </div>
@@ -110,7 +202,7 @@ const AdminDashboard = () => {
                       <i className="fa-regular fa-gem" />
                     </span>
                     <div className="dash-widget-info">
-                      <h3>37</h3>
+                      <h3>{projects.reduce((totalTasks, project) => totalTasks + project.tasks.length, 0)}</h3>
                       <span>Tasks</span>
                     </div>
                   </div>
@@ -123,7 +215,7 @@ const AdminDashboard = () => {
                       <i className="fa fa-user" />
                     </span>
                     <div className="dash-widget-info">
-                      <h3>218</h3>
+                      <h3>{users.length}</h3>
                       <span>Employees</span>
                     </div>
                   </div>
@@ -136,23 +228,26 @@ const AdminDashboard = () => {
                   <div className="col-md-6 text-center">
                     <div className="card">
                       <div className="card-body">
-                        <h3 className="card-title">Projects Revenue</h3>
+                        <h3 className="card-title">Project Workload Overview</h3>
                         <ResponsiveContainer width="100%" height={300}>
                           <BarChart
-                            data={barchartdata}
+                            data={chartData}
                             margin={{
                               top: 5,
-                              right: 5,
-                              left: 5,
+                              right: 30,
+                              left: 20,
                               bottom: 5,
                             }}>
-                            <CartesianGrid />
-                            <XAxis dataKey="y" />
-                            <YAxis />
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="y" angle={-15} textAnchor="end" interval={0} height={60} />
+                            {/* Define two Y-axes */}
+                            <YAxis yAxisId="left" orientation="left" stroke="#ff9b44" />
+                            <YAxis yAxisId="right" orientation="right" stroke="#fc6075" />
                             <Tooltip />
                             <Legend />
-                            <Bar dataKey="Total Income" fill="#ff9b44" />
-                            <Bar dataKey="Total Outcome" fill="#fc6075" />
+                            {/* Link each bar to its corresponding Y-axis */}
+                            <Bar yAxisId="left" dataKey="Working Hours" fill="#ff9b44" />
+                            <Bar yAxisId="right" dataKey="Number of Tasks" fill="#fc6075" />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
@@ -164,16 +259,18 @@ const AdminDashboard = () => {
                         <h3 className="card-title">Projects Overview</h3>
                         <ResponsiveContainer width="100%" height={300}>
                           <LineChart
-                            data={linechartdata}
-                            margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                            data={projectProgressData}
+                            margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+                          >
                             <CartesianGrid />
-                            <XAxis dataKey="y" />
+                            <XAxis dataKey="year" />
                             <YAxis />
                             <Tooltip />
                             <Legend />
                             <Line
                               type="monotone"
-                              dataKey="Total Sales"
+                              dataKey="completedTasks"
+                              name="Completed Tasks"
                               stroke="#ff9b44"
                               fill="#00c5fb"
                               strokeWidth={3}
@@ -182,7 +279,8 @@ const AdminDashboard = () => {
                             />
                             <Line
                               type="monotone"
-                              dataKey="Total Revenue"
+                              dataKey="totalTasks"
+                              name="Total Tasks"
                               stroke="#fc6075"
                               fill="#0253cc"
                               strokeWidth={3}
@@ -190,6 +288,7 @@ const AdminDashboard = () => {
                               activeDot={{ r: 7 }}
                             />
                           </LineChart>
+
                         </ResponsiveContainer>
                       </div>
                     </div>
@@ -199,99 +298,122 @@ const AdminDashboard = () => {
             </div>
             
             <div className="row">            
-              <RecentTable />
+              
               <div className="col-md-6 d-flex">
                 <div className="card flex-fill">
                   <div className="card-body">
                     <h4 className="card-title">Task Statistics</h4>
                     <div className="statistics">
                       <div className="row">
-                        <div className="col-md-6 col-6 text-center">
+                        <div className="col-md-12 col-12 text-center">
                           <div className="stats-box mb-4">
                             <p>Total Tasks</p>
-                            <h3>385</h3>
-                          </div>
-                        </div>
-                        <div className="col-md-6 col-6 text-center">
-                          <div className="stats-box mb-4">
-                            <p>Overdue Tasks</p>
-                            <h3>19</h3>
+                            <h3>{projects.reduce((totalTasks, project) => totalTasks + project.tasks.length, 0)}</h3>
                           </div>
                         </div>
                       </div>
                     </div>
                     <div className="progress mb-4">
                       <div
-                        className="progress-bar bg-purple"
+                        className="progress-bar bg-danger"
                         role="progressbar"
-                        style={{ width: "30%" }}
-                        aria-valuenow={30}
+                        style={{ width: `${pendingTaskPercentage}%` }}
+                        aria-valuenow={18}
                         aria-valuemin={0}
                         aria-valuemax={100}>
-                        30%
+                        {pendingTaskPercentage}%
                       </div>
                       <div
                         className="progress-bar bg-warning"
                         role="progressbar"
-                        style={{ width: "22%" }}
-                        aria-valuenow={18}
+                        style={{ width: `${inProgressTaskPercentage}%` }}
+                        aria-valuenow={12}
                         aria-valuemin={0}
                         aria-valuemax={100}>
-                        22%
+                        {inProgressTaskPercentage}%
                       </div>
                       <div
                         className="progress-bar bg-success"
                         role="progressbar"
-                        style={{ width: "24%" }}
-                        aria-valuenow={12}
-                        aria-valuemin={0}
-                        aria-valuemax={100}>
-                        24%
-                      </div>
-                      <div
-                        className="progress-bar bg-danger"
-                        role="progressbar"
-                        style={{ width: "26%" }}
+                        style={{ width: `${completedTaskPercentage}%` }}
                         aria-valuenow={14}
                         aria-valuemin={0}
                         aria-valuemax={100}>
-                        21%
-                      </div>
-                      <div
-                        className="progress-bar bg-info"
-                        role="progressbar"
-                        style={{ width: "10%" }}
-                        aria-valuenow={14}
-                        aria-valuemin={0}
-                        aria-valuemax={100}>
-                        10%
+                        {completedTaskPercentage}%
                       </div>
                     </div>
                     <div>
                       <p>
-                        <i className="far fa-dot-circle text-purple me-2" />
-                        Completed Tasks <span className="float-end">166</span>
+                        <i className="far fa-dot-circle text-danger me-2" />
+                        Pending Tasks <span className="float-end">{pendingTasks}</span>
                       </p>
                       <p>
                         <i className="far fa-dot-circle text-warning me-2" />
-                        Inprogress Tasks <span className="float-end">115</span>
+                        Inprogress Tasks <span className="float-end">{inProgressTasks}</span>
                       </p>
                       <p>
                         <i className="far fa-dot-circle text-success me-2" />
-                        On Hold Tasks <span className="float-end">31</span>
-                      </p>
-                      <p>
-                        <i className="far fa-dot-circle text-danger me-2" />
-                        Pending Tasks <span className="float-end">47</span>
-                      </p>
-                      <p className="mb-0">
-                        <i className="far fa-dot-circle text-info me-2" />
-                        Review Tasks <span className="float-end">5</span>
+                        Completed Tasks <span className="float-end">{completedTasks}</span>
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
+              <div className="col-md-6 d-flex">
+            <div className="card card-table flex-fill">
+              <div className="card-header">
+                <h3 className="card-title mb-0">Recent Projects</h3>
+              </div>
+              <div className="card-body">
+                <div className="table-responsive">
+                  <table className="table custom-table mb-0">
+                    <thead>
+                      <tr>
+                        <th>Project Name</th>
+                        <th>Progress</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {projects.map((project, index) => (
+                        <tr key={index}>
+                          <td>
+                            <h2>
+                              <Link to={`/app/projects/projects-view/${project.id}`}>
+                                {project.title}
+                              </Link>
+                            </h2>
+                            <small className="block text-ellipsis">
+                              <span>{project.tasks.length}</span>{" "}
+                              <span className="text-muted">open tasks, </span>
+                              <span>{project.tasks.filter(task => task.status === 2).length}</span>{" "}
+                              <span className="text-muted">tasks completed</span>
+                            </small>
+                          </td>
+                          <td>
+                             <div className="progress progress-xs progress-striped">
+                      <div
+                        className="progress-bar"
+                        role="progressbar"
+                        data-bs-toggle="tooltip"
+                        title={`${Math.round((project.tasks.filter(task => task.status === 2).length / project.tasks.length) * 100)}%`}
+                        style={{ width: `${Math.round((project.tasks.filter(task => task.status === 2).length / project.tasks.length) * 100)}%` }}
+                  
+                      />
+                    </div>
+                    </td>
+                    
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="card-footer">
+          <Link to="/app/projects/project_dashboard">View all projects</Link>
+        </div>
+      </div>
+    </div>
+
             </div>
           </div>
           {/* /Page Content */}

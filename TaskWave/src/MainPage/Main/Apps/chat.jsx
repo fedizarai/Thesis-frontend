@@ -1,8 +1,7 @@
-/* eslint-disable react/no-unescaped-entities */
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect , useRef, useLayoutEffect  } from "react";
 import { Helmet } from "react-helmet";
 import { Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Offcanvas from "../../../Entryfile/offcanvance";
 import {
   PlaceHolder,
@@ -12,61 +11,178 @@ import {
   Avatar_13,
   Avatar_16,
 } from "../../../Entryfile/imagepath";
+import moment from 'moment';
+import Cookies from 'js-cookie';
+import "./chat.css";
+
 
 import { io } from "socket.io-client";
 
 
 const Chat = () => {
+   
+  const [socket, setSocket] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [text, setText] = useState("");
+  const { projectId } = useParams();
+  const [projects, setProjects] = useState([]);
+  const chatBoxRef = useRef(null);
 
-  const socket = io.connect("http://localhost:3001");
 
   const [windowDimension, detectHW] = useState({
     winWidth: window.innerWidth,
     winHeight: window.innerHeight,
   });
-  const detectSize = () => {
-    detectHW({
-      winWidth: window.innerWidth,
-      winHeight: window.innerHeight,
-    });
-  };
+  const userId = useRef(Cookies.get('userid')); 
+  
+
   useEffect(() => {
-    window.addEventListener("resize", detectSize);
-    return () => {
-      window.removeEventListener("resize", detectSize);
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/users");
+        const usersArray = await response.json();
+        if (response.ok) {
+          const usersById = {};
+          usersArray.forEach(user => {
+            usersById[user.id] = user;  // Ensure user.id is the correct key from your data
+          });
+          setUsers(usersById);
+        } else {
+          throw new Error('Failed to fetch users');
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
     };
-  }, [windowDimension]);
 
+    fetchUsers();
+  }, []);
+
+  
   useEffect(() => {
-    let firstload = localStorage.getItem("minheight");
-    if (firstload === "false") {
-      setTimeout(function () {
-        window.location.reload(1);
-        localStorage.removeItem("minheight");
-      }, 1000);
+    if (userId.current) {
+      const newSocket = io("http://localhost:3001", {
+        query: { userId: userId.current },
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 5000,
+      });
+
+      newSocket.on('connect', () => {
+        console.log('Socket connected:', newSocket.id); // Ensures connection
+      });
+
+      newSocket.on("newMessage", (data) => {
+        setMessages(prevMessages => {
+          const messageAlreadyExists = prevMessages.some(msg => msg.timestamp === data.timestamp && msg.userId === data.userId);
+          if (!messageAlreadyExists) {
+            return [...prevMessages, { ...data, user_id: parseInt(data.userId, 10) }]; // Convert userId to integer
+          }
+          return prevMessages;
+        });
+
+       setTimeout(() => {
+                scrollToBottom();
+            }, 100);
+
+      });
+
+      setSocket(newSocket); // Sets the socket in state
+
+      return () => {
+        console.log('Disconnecting socket:', newSocket.id); // Confirms disconnection
+        newSocket.off("newMessage");
+        newSocket.close();
+      };
     }
-  });
+  }, [userId.current]);
 
-  const [messages, setMessages] = useState([]);
-  const [text, setText] = useState("");
-
-  useEffect(() => {
-    socket.on("receive_message", (data) => {
-      //alert(data.text);
-      messages.push(data.text);
-    });
-  }, [socket]);
 
   const onSubmit = (e) => {
-    socket.emit('onTextChange', {
-      text,
-      from: socket.id
-    });
+    e.preventDefault();
+    if (text.trim() && socket) {
+      const timestamp = new Date().toISOString(); // Create a timestamp for unique identification
+      const messageToSend = {
+        projectId,
+        message: text,
+        userId: userId.current,
+        timestamp: timestamp,
+      };
+      socket.emit('chatMessage', messageToSend);
+      setText(""); 
+      setTimeout(() => {
+          scrollToBottom();
+      }, 100); 
+
+    } else {
+      console.log("Cannot send message, socket not connected.");
+    }
   };
-  console.log("messeages:" ,messages);
+
+
+
+
+
+  const scrollToBottom = () => {
+    const chatBox = chatBoxRef.current;
+    if (chatBox) {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+};
+
+    
+
+
+
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+        try {
+            const response = await fetch(`http://localhost:3001/chat/${projectId}`);
+            if (!response.ok) throw new Error('Failed to fetch');
+            const data = await response.json();
+            setMessages(data);
+        } catch (error) {
+            console.error('Failed to load messages:', error);
+        }
+    };
+
+    fetchMessages();
+  }, [projectId]); // Rerun when projectId changes
+
+  useEffect(() => {
+  console.log('Current messages:', messages);
+  }, [messages]);
+    
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/projects');
+        if (!response.ok) {
+          throw new Error('Failed to fetch projects');
+        }
+        const projectsData = await response.json();
+        setProjects(projectsData);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+      }
+    };
+
+    fetchProjects();
+
+    return () => {
+      // Cleanup function if needed
+    };
+  }, []);
+
+  const project = projects.find(project => project.id === parseInt(projectId));
+  const projectName = project ? project.title : '';
+
 
   return (
     <>
+      
       <div
         className="page-wrapper"
         style={{ minHeight: windowDimension.winHeight }}>
@@ -74,883 +190,114 @@ const Chat = () => {
           <title>Chat</title>
           <meta name="description" content="Chat" />
         </Helmet>
+
+
         {/* Chat Main Row */}
         <div className="chat-main-row">
-          {/* Chat Main Wrapper */}
-          <div className="chat-main-wrapper">
-            {/* Chats View */}
-            <div className="col-lg-9 message-view task-view">
-              <div className="chat-window">
-                <div className="fixed-header">
-                  <div className="navbar">
-                    <div className="user-details me-auto">
-                      <div className="float-start user-img">
-                        <Link
-                          className="avatar"
-                          to="/app/profile/employee-profile"
-                          title="Mike Litorus">
-                          <img
-                            src={Avatar_05}
-                            alt=""
-                            className="rounded-circle"
-                          />
-                          <span className="status online" />
-                        </Link>
-                      </div>
-                      <div className="user-info float-start">
-                        <Link
-                          to="/app/profile/employee-profile"
-                          title="Mike Litorus">
-                          <span>Mike Litorus</span>{" "}
-                          <i className="typing-text">Typing...</i>
-                        </Link>
-                        <span className="last-seen">
-                          Last seen today at 7:50 AM
-                        </span>
-                      </div>
-                    </div>
-                    <div className="search-box">
-                      <div className="input-group input-group-sm">
-                        <input
-                          type="text"
-                          placeholder="Search"
-                          className="form-control"
-                        />
-                        <button type="button" className="btn">
-                          <i className="fa fa-search" />
-                        </button>
-                      </div>
-                    </div>
-                    <ul className="nav custom-menu">
-                      <li className="nav-item">
-                        <Link
-                          className="nav-link task-chat profile-rightbar float-end"
-                          id="task_chat"
-                          to="#task_window">
-                          <i className="fa fa-user" />
-                        </Link>
-                      </li>
-                      <li className="nav-item">
-                        <Link
-                          onClick={() =>
-                            localStorage.setItem("minheight", "true")
-                          }
-                          to="/conversation/voice-call"
-                          className="nav-link">
-                          <i className="fa fa-phone" />
-                        </Link>
-                      </li>
-                      <li className="nav-item">
-                        <Link
-                          to="/conversation/video-call"
-                          className="nav-link">
-                          <i className="fa fa-video-camera" />
-                        </Link>
-                      </li>
-                      <li className="nav-item dropdown dropdown-action">
-                        <Link
-                          aria-expanded="false"
-                          data-bs-toggle="dropdown"
-                          className="nav-link dropdown-toggle"
-                          to="#">
-                          <i className="fa fa-cog" />
-                        </Link>
-                        <div className="dropdown-menu dropdown-menu-right">
-                          <Link to="#" className="dropdown-item">
-                            Delete Conversations
-                          </Link>
-                          <Link to="#" className="dropdown-item">
-                            Settings
-                          </Link>
+            <div className="chat-main-wrapper">
+                <div className="col-lg-9 message-view task-view">
+                    <div className="chat-window">
+                        <div className="fixed-header">
+                            <div className="navbar">
+                                {/* User Info and Controls */}
+                                <div className="user-details me-auto">
+                                    <div className="float-start user-img">
+                                        <Link className="avatar" to="/app/profile/employee-profile" >
+                                            <img src={Avatar_05} alt="" className="rounded-circle" />
+                                            <span className="status online"></span>
+                                        </Link>
+                                    </div>
+                                    <div className="user-info float-start">
+                                    
+                                            <span>{projectName}</span>
+                                       
+                                    </div>
+                                </div>
+                                {/* Search and Settings */}
+                                <div className="search-box">
+                                    <div className="input-group input-group-sm">
+                                        <input type="text" placeholder="Search" className="form-control" />
+                                        <button type="button" className="btn">
+                                            <i className="fa fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-                <div className="chat-contents">
-                  <div className="chat-content-wrap">
-                    <div className="chat-wrap-inner">
-                      <div className="chat-box">
-                        <div className="chats">
-
-
-                    {messages.map((msg, index) => (
-                        <div className="chat chat-left">
-                            <div className="chat-avatar">
-                              <Link
-                                to="/app/profile/employee-profile"
-                                className="avatar">
-                                <img alt="" src={Avatar_05} />
-                              </Link>
-                            </div>
-                            <div className="chat-body">
-                              <div className="chat-bubble">
-                                <div className="chat-content">
-                                  
-                                  <p key={index}>
-                                   {msg}
-                                  </p>
-                                  <span className="chat-time">8:35 am</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                   ))}
-
-
-
-                          {/*<div className="chat chat-right">
-                            <div className="chat-body">
-                              <div className="chat-bubble">
-                                <div className="chat-content">
-                                  <p>Hello. What can I do for you?</p>
-                                  <span className="chat-time">8:30 am</span>
-                                </div>
-                                <div className="chat-action-btns">
-                                  <ul>
-                                    <li>
-                                      <Link
-                                        to="#"
-                                        className="share-msg"
-                                        title="Share">
-                                        <i className="fa fa-share-alt" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="edit-msg">
-                                        <i className="fa fa-pencil" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="del-msg">
-                                        <i className="fa fa-trash" />
-                                      </Link>
-                                    </li>
-                                  </ul>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="chat-line">
-                            <span className="chat-date">October 8th, 2018</span>
-                          </div>
-                          <div className="chat chat-left">
-                            <div className="chat-avatar">
-                              <Link
-                                to="/app/profile/employee-profile"
-                                className="avatar">
-                                <img alt="" src={Avatar_05} />
-                              </Link>
-                            </div>
-                            <div className="chat-body">
-                              <div className="chat-bubble">
-                                <div className="chat-content">
-                                  <p>I'm just looking around.</p>
-                                  <p>
-                                    Will you tell me something about yourself?{" "}
-                                  </p>
-                                  <span className="chat-time">8:35 am</span>
-                                </div>
-                                <div className="chat-action-btns">
-                                  <ul>
-                                    <li>
-                                      <Link
-                                        to="#"
-                                        className="share-msg"
-                                        title="Share">
-                                        <i className="fa fa-share-alt" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="edit-msg">
-                                        <i className="fa fa-pencil" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="del-msg">
-                                        <i className="fa fa-trash" />
-                                      </Link>
-                                    </li>
-                                  </ul>
-                                </div>
-                              </div>
-                              <div className="chat-bubble">
-                                <div className="chat-content">
-                                  <p>Are you there? That time!</p>
-                                  <span className="chat-time">8:40 am</span>
-                                </div>
-                                <div className="chat-action-btns">
-                                  <ul>
-                                    <li>
-                                      <Link
-                                        to="#"
-                                        className="share-msg"
-                                        title="Share">
-                                        <i className="fa fa-share-alt" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="edit-msg">
-                                        <i className="fa fa-pencil" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="del-msg">
-                                        <i className="fa fa-trash" />
-                                      </Link>
-                                    </li>
-                                  </ul>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="chat chat-right">
-                            <div className="chat-body">
-                              <div className="chat-bubble">
-                                <div className="chat-content">
-                                  <p>Where?</p>
-                                  <span className="chat-time">8:35 am</span>
-                                </div>
-                                <div className="chat-action-btns">
-                                  <ul>
-                                    <li>
-                                      <Link
-                                        to="#"
-                                        className="share-msg"
-                                        title="Share">
-                                        <i className="fa fa-share-alt" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="edit-msg">
-                                        <i className="fa fa-pencil" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="del-msg">
-                                        <i className="fa fa-trash" />
-                                      </Link>
-                                    </li>
-                                  </ul>
-                                </div>
-                              </div>
-                              <div className="chat-bubble">
-                                <div className="chat-content">
-                                  <p>
-                                    OK, my name is Limingqiang. I like singing,
-                                    playing basketballand so on.
-                                  </p>
-                                  <span className="chat-time">8:42 am</span>
-                                </div>
-                                <div className="chat-action-btns">
-                                  <ul>
-                                    <li>
-                                      <Link
-                                        to="#"
-                                        className="share-msg"
-                                        title="Share">
-                                        <i className="fa fa-share-alt" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="edit-msg">
-                                        <i className="fa fa-pencil" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="del-msg">
-                                        <i className="fa fa-trash" />
-                                      </Link>
-                                    </li>
-                                  </ul>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="chat chat-left">
-                            <div className="chat-avatar">
-                              <Link
-                                to="/app/profile/employee-profile"
-                                className="avatar">
-                                <img alt="" src={Avatar_05} />
-                              </Link>
-                            </div>
-                            <div className="chat-body">
-                              <div className="chat-bubble">
-                                <div className="chat-content">
-                                  <p>You wait for notice.</p>
-                                  <span className="chat-time">8:30 am</span>
-                                </div>
-                                <div className="chat-action-btns">
-                                  <ul>
-                                    <li>
-                                      <Link
-                                        to="#"
-                                        className="share-msg"
-                                        title="Share">
-                                        <i className="fa fa-share-alt" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="edit-msg">
-                                        <i className="fa fa-pencil" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="del-msg">
-                                        <i className="fa fa-trash" />
-                                      </Link>
-                                    </li>
-                                  </ul>
-                                </div>
-                              </div>
-                              <div className="chat-bubble">
-                                <div className="chat-content">
-                                  <p>Consectetuorem ipsum dolor sit?</p>
-                                  <span className="chat-time">8:50 am</span>
-                                </div>
-                                <div className="chat-action-btns">
-                                  <ul>
-                                    <li>
-                                      <Link
-                                        to="#"
-                                        className="share-msg"
-                                        title="Share">
-                                        <i className="fa fa-share-alt" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="edit-msg">
-                                        <i className="fa fa-pencil" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="del-msg">
-                                        <i className="fa fa-trash" />
-                                      </Link>
-                                    </li>
-                                  </ul>
-                                </div>
-                              </div>
-                              <div className="chat-bubble">
-                                <div className="chat-content">
-                                  <p>OK?</p>
-                                  <span className="chat-time">8:55 am</span>
-                                </div>
-                                <div className="chat-action-btns">
-                                  <ul>
-                                    <li>
-                                      <Link
-                                        to="#"
-                                        className="share-msg"
-                                        title="Share">
-                                        <i className="fa fa-share-alt" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="edit-msg">
-                                        <i className="fa fa-pencil" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="del-msg">
-                                        <i className="fa fa-trash" />
-                                      </Link>
-                                    </li>
-                                  </ul>
-                                </div>
-                              </div>
-                              <div className="chat-bubble">
-                                <div className="chat-content img-content">
-                                  <div className="chat-img-group clearfix">
-                                    <p>Uploaded 3 Images</p>
-                                    <Link className="chat-img-attach" to="#">
-                                      <img
-                                        width={182}
-                                        height={137}
-                                        alt=""
-                                        src={PlaceHolder}
-                                      />
-                                      <div className="chat-placeholder">
-                                        <div className="chat-img-name">
-                                          placeholder.jpg
+                        <div className="chat-contents">
+                          <div className="chat-content-wrap">
+                            <div className="chat-wrap-inner">
+                              <div className="chat-box" ref={chatBoxRef} >
+                                <div className="chats">
+                                  {messages.map((msg, index) => (
+                                    <div key={index} className={`chat ${parseInt(msg.user_id, 10) === parseInt(userId.current, 10) ? 'chat-right' : 'chat-left'}`}>
+                                      {parseInt(msg.user_id, 10) !== parseInt(userId.current, 10) && (
+                                        <div className="chat-avatar">
+                                          <Link to={`/app/profile/employee-profile/${parseInt(msg.user_id, 10)}`} className="avatar">
+                                            <img 
+                                                alt={users[msg.user_id]?.name || 'User'} // Fallback if name isn't available
+                                                src={users[msg.user_id]?.image || Avatar_05} // Fallback image if user image isn't available
+                                                title={users[msg.user_id]?.name || 'Unknown User'}// Tooltip that shows user's name on hover
+                                              />
+                                          </Link>
                                         </div>
-                                        <div className="chat-file-desc">
-                                          842 KB
+                                      )}
+                                      <div className="chat-body">
+                                        <div className="chat-bubble">
+                                          <div className="chat-content">
+                                            <p>{msg.message}</p>
+                                            <span className="chat-time">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                                          </div>
                                         </div>
                                       </div>
-                                    </Link>
-                                    <Link className="chat-img-attach" to="#">
-                                      <img
-                                        width={182}
-                                        height={137}
-                                        alt=""
-                                        src={PlaceHolder}
-                                      />
-                                      <div className="chat-placeholder">
-                                        <div className="chat-img-name">
-                                          842 KB
-                                        </div>
-                                      </div>
-                                    </Link>
-                                    <Link className="chat-img-attach" to="#">
-                                      <img
-                                        width={182}
-                                        height={137}
-                                        alt=""
-                                        src={PlaceHolder}
-                                      />
-                                      <div className="chat-placeholder">
-                                        <div className="chat-img-name">
-                                          placeholder.jpg
-                                        </div>
-                                        <div className="chat-file-desc">
-                                          842 KB
-                                        </div>
-                                      </div>
-                                    </Link>
-                                  </div>
-                                  <span className="chat-time">9:00 am</span>
-                                </div>
-                                <div className="chat-action-btns">
-                                  <ul>
-                                    <li>
-                                      <Link
-                                        to="#"
-                                        className="share-msg"
-                                        title="Share">
-                                        <i className="fa fa-share-alt" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="edit-msg">
-                                        <i className="fa fa-pencil" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="del-msg">
-                                        <i className="fa fa-trash" />
-                                      </Link>
-                                    </li>
-                                  </ul>
+                                    </div>
+                                  ))}
                                 </div>
                               </div>
                             </div>
                           </div>
-                          <div className="chat chat-right">
-                            <div className="chat-body">
-                              <div className="chat-bubble">
-                                <div className="chat-content">
-                                  <p>OK!</p>
-                                  <span className="chat-time">9:00 am</span>
-                                </div>
-                                <div className="chat-action-btns">
-                                  <ul>
-                                    <li>
-                                      <Link
-                                        to="#"
-                                        className="share-msg"
-                                        title="Share">
-                                        <i className="fa fa-share-alt" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="edit-msg">
-                                        <i className="fa fa-pencil" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="del-msg">
-                                        <i className="fa fa-trash" />
-                                      </Link>
-                                    </li>
-                                  </ul>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="chat chat-left">
-                            <div className="chat-avatar">
-                              <Link
-                                to="/app/profile/employee-profile"
-                                className="avatar">
-                                <img alt="" src={Avatar_05} />
-                              </Link>
-                            </div>
-                            <div className="chat-body">
-                              <div className="chat-bubble">
-                                <div className="chat-content">
-                                  <p>Uploaded 3 files</p>
-                                  <ul className="attach-list">
-                                    <li>
-                                      <i className="fa fa-file" />{" "}
-                                      <Link to="#">example.avi</Link>
-                                    </li>
-                                    <li>
-                                      <i className="fa fa-file" />{" "}
-                                      <Link to="#">activity.psd</Link>
-                                    </li>
-                                    <li>
-                                      <i className="fa fa-file" />{" "}
-                                      <Link to="#">example.psd</Link>
-                                    </li>
-                                  </ul>
-                                </div>
-                                <div className="chat-action-btns">
-                                  <ul>
-                                    <li>
-                                      <Link
-                                        to="#"
-                                        className="share-msg"
-                                        title="Share">
-                                        <i className="fa fa-share-alt" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="edit-msg">
-                                        <i className="fa fa-pencil" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="del-msg">
-                                        <i className="fa fa-trash" />
-                                      </Link>
-                                    </li>
-                                  </ul>
-                                </div>
-                              </div>
-                              <div className="chat-bubble">
-                                <div className="chat-content">
-                                  <p>Consectetuorem ipsum dolor sit?</p>
-                                  <span className="chat-time">8:50 am</span>
-                                </div>
-                                <div className="chat-action-btns">
-                                  <ul>
-                                    <li>
-                                      <Link
-                                        to="#"
-                                        className="share-msg"
-                                        title="Share">
-                                        <i className="fa fa-share-alt" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="edit-msg">
-                                        <i className="fa fa-pencil" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="del-msg">
-                                        <i className="fa fa-trash" />
-                                      </Link>
-                                    </li>
-                                  </ul>
-                                </div>
-                              </div>
-                              <div className="chat-bubble">
-                                <div className="chat-content">
-                                  <p>OK?</p>
-                                  <span className="chat-time">8:55 am</span>
-                                </div>
-                                <div className="chat-action-btns">
-                                  <ul>
-                                    <li>
-                                      <Link
-                                        to="#"
-                                        className="share-msg"
-                                        title="Share">
-                                        <i className="fa fa-share-alt" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="edit-msg">
-                                        <i className="fa fa-pencil" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="del-msg">
-                                        <i className="fa fa-trash" />
-                                      </Link>
-                                    </li>
-                                  </ul>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="chat chat-right">
-                            <div className="chat-body">
-                              <div className="chat-bubble">
-                                <div className="chat-content img-content">
-                                  <div className="chat-img-group clearfix">
-                                    <p>Uploaded 6 Images</p>
-                                    <Link className="chat-img-attach" to="#">
-                                      <img
-                                        width={182}
-                                        height={137}
-                                        alt=""
-                                        src={PlaceHolder}
-                                      />
-                                      <div className="chat-placeholder">
-                                        <div className="chat-img-name">
-                                          placeholder.jpg
-                                        </div>
-                                        <div className="chat-file-desc">
-                                          842 KB
-                                        </div>
-                                      </div>
-                                    </Link>
-                                    <Link className="chat-img-attach" to="#">
-                                      <img
-                                        width={182}
-                                        height={137}
-                                        alt=""
-                                        src={PlaceHolder}
-                                      />
-                                      <div className="chat-placeholder">
-                                        <div className="chat-img-name">
-                                          842 KB
-                                        </div>
-                                      </div>
-                                    </Link>
-                                    <Link className="chat-img-attach" to="#">
-                                      <img
-                                        width={182}
-                                        height={137}
-                                        alt=""
-                                        src={PlaceHolder}
-                                      />
-                                      <div className="chat-placeholder">
-                                        <div className="chat-img-name">
-                                          placeholder.jpg
-                                        </div>
-                                        <div className="chat-file-desc">
-                                          842 KB
-                                        </div>
-                                      </div>
-                                    </Link>
-                                    <Link className="chat-img-attach" to="#">
-                                      <img
-                                        width={182}
-                                        height={137}
-                                        alt=""
-                                        src={PlaceHolder}
-                                      />
-                                      <div className="chat-placeholder">
-                                        <div className="chat-img-name">
-                                          placeholder.jpg
-                                        </div>
-                                        <div className="chat-file-desc">
-                                          842 KB
-                                        </div>
-                                      </div>
-                                    </Link>
-                                    <Link className="chat-img-attach" to="#">
-                                      <img
-                                        width={182}
-                                        height={137}
-                                        alt=""
-                                        src={PlaceHolder}
-                                      />
-                                      <div className="chat-placeholder">
-                                        <div className="chat-img-name">
-                                          placeholder.jpg
-                                        </div>
-                                        <div className="chat-file-desc">
-                                          842 KB
-                                        </div>
-                                      </div>
-                                    </Link>
-                                    <Link className="chat-img-attach" to="#">
-                                      <img
-                                        width={182}
-                                        height={137}
-                                        alt=""
-                                        src={PlaceHolder}
-                                      />
-                                      <div className="chat-placeholder">
-                                        <div className="chat-img-name">
-                                          placeholder.jpg
-                                        </div>
-                                        <div className="chat-file-desc">
-                                          842 KB
-                                        </div>
-                                      </div>
-                                    </Link>
-                                  </div>
-                                  <span className="chat-time">9:00 am</span>
-                                </div>
-                                <div className="chat-action-btns">
-                                  <ul>
-                                    <li>
-                                      <Link
-                                        to="#"
-                                        className="share-msg"
-                                        title="Share">
-                                        <i className="fa fa-share-alt" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="edit-msg">
-                                        <i className="fa fa-pencil" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="del-msg">
-                                        <i className="fa fa-trash" />
-                                      </Link>
-                                    </li>
-                                  </ul>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="chat chat-left">
-                            <div className="chat-avatar">
-                              <Link
-                                to="/app/profile/employee-profile"
-                                className="avatar">
-                                <img alt="" src={Avatar_05} />
-                              </Link>
-                            </div>
-                            <div className="chat-body">
-                              <div className="chat-bubble">
-                                <div className="chat-content">
-                                  <ul className="attach-list">
-                                    <li className="pdf-file">
-                                      <i className="fa fa-file-pdf-o" />{" "}
-                                      <Link to="#">Document_2016.pdf</Link>
-                                    </li>
-                                  </ul>
-                                  <span className="chat-time">9:00 am</span>
-                                </div>
-                                <div className="chat-action-btns">
-                                  <ul>
-                                    <li>
-                                      <Link
-                                        to="#"
-                                        className="share-msg"
-                                        title="Share">
-                                        <i className="fa fa-share-alt" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="edit-msg">
-                                        <i className="fa fa-pencil" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="del-msg">
-                                        <i className="fa fa-trash" />
-                                      </Link>
-                                    </li>
-                                  </ul>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="chat chat-right">
-                            <div className="chat-body">
-                              <div className="chat-bubble">
-                                <div className="chat-content">
-                                  <ul className="attach-list">
-                                    <li className="pdf-file">
-                                      <i className="fa fa-file-pdf-o" />{" "}
-                                      <Link to="#">Document_2016.pdf</Link>
-                                    </li>
-                                  </ul>
-                                  <span className="chat-time">9:00 am</span>
-                                </div>
-                                <div className="chat-action-btns">
-                                  <ul>
-                                    <li>
-                                      <Link
-                                        to="#"
-                                        className="share-msg"
-                                        title="Share">
-                                        <i className="fa fa-share-alt" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="edit-msg">
-                                        <i className="fa fa-pencil" />
-                                      </Link>
-                                    </li>
-                                    <li>
-                                      <Link to="#" className="del-msg">
-                                        <i className="fa fa-trash" />
-                                      </Link>
-                                    </li>
-                                  </ul>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="chat chat-left">
-                            <div className="chat-avatar">
-                              <Link
-                                to="/app/profile/employee-profile"
-                                className="avatar">
-                                <img alt="" src={Avatar_05} />
-                              </Link>
-                            </div>
-                            <div className="chat-body">
-                              <div className="chat-bubble">
-                                <div className="chat-content">
-                                  <p>Typing ...</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>*/}
-                        
-
-
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="chat-footer">
-                  <div className="message-bar">
-                    <div className="message-inner">
-                      <Link
-                        className="link attach-icon"
-                        to="#"
-                        data-bs-toggle="modal"
-                        data-bs-target="#drag_files">
-                        <img src={Attachment} alt="" />
-                      </Link>
-                      <div className="message-area">
-                        <div className="input-group">
-                          <textarea
-                            className="form-control"
-                            placeholder="Type message..."
-                            value={text} 
-                            onChange={(e) => setText(e.target.value)}
-                            
-                          />
-                          <span className="input-group-append">
-                            <button 
-                              className="btn btn-custom" 
-                              type="button"
-                              onClick={onSubmit}
-
-                              >
-                              <i className="fa-solid fa-paper-plane" />
-                            </button>
-                          </span>
+                        <div className="chat-footer">
+                            <div className="message-bar">
+                                <div className="message-inner">
+                                    <Link className="link attach-icon" to="#" data-bs-toggle="modal" data-bs-target="#drag_files">
+                                        <img src={Attachment} alt="" />
+                                    </Link>
+                                    <div className="message-area">
+                                        <div className="input-group">
+                                            <textarea
+                                                className="form-control"
+                                                placeholder="Type message..."
+                                                value={text}
+                                                onChange={(e) => setText(e.target.value)}
+                                                onKeyPress={(e) => {
+                                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                                        e.preventDefault();
+                                                        onSubmit(e);
+                                                    }
+                                                }}
+                                            />
+                                            <span className="input-group-append">
+                                                <button className="btn btn-custom" type="submit" onClick={onSubmit}>
+                                                    <i className="fa fa-paper-plane"></i>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                      </div>
                     </div>
-                  </div>
                 </div>
-              </div>
             </div>
-            {/* /Chats View */}
-           
-          </div>
-          {/* /Chat Main Wrapper */}
         </div>
         {/* /Chat Main Row */}
+
+
+
+
+
+
         {/* Drogfiles Modal */}
         <div id="drag_files" className="modal custom-modal fade" role="dialog">
           <div
@@ -1047,6 +394,9 @@ const Chat = () => {
           </div>
         </div>
         {/* /Drogfiles Modal */}
+
+
+
         {/* Add Group Modal */}
         <div id="add_group" className="modal custom-modal fade" role="dialog">
           <div
@@ -1093,6 +443,12 @@ const Chat = () => {
           </div>
         </div>
         {/* /Add Group Modal */}
+
+
+
+
+
+
         {/* Add Chat User Modal */}
         <div
           id="add_chat_user"
@@ -1184,6 +540,11 @@ const Chat = () => {
           </div>
         </div>
         {/* /Add Chat User Modal */}
+
+
+
+
+
         {/* Share Files Modal */}
         <div id="share_files" className="modal custom-modal fade" role="dialog">
           <div
@@ -1231,6 +592,11 @@ const Chat = () => {
           </div>
         </div>
         {/* /Share Files Modal */}
+
+
+
+
+
       </div>
       <Offcanvas />
     </>

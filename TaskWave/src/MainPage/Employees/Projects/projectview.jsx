@@ -8,6 +8,7 @@ import { faFilePdf, faFileImage, faFileAlt, faFile } from '@fortawesome/free-sol
 import "./projectview.css";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { io } from "socket.io-client";
 import {
   Avatar_16,
   Avatar_02,
@@ -21,13 +22,65 @@ import {
 //import "../../../assets/scss/pages/task.scss";
 import Editproject from "../../../_components/modelbox/Editproject";
 import Offcanvas from "../../../Entryfile/offcanvance";
+import { DefaultEditor } from "react-simple-wysiwyg";
 
 const ProjectView = ({ projects }) => {
-   const { taskId } = useParams();
+
+  const { taskId } = useParams();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [taskDetails, setTaskDetails] = useState(null);
+  const [selectedTask, setSelectedTask] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedTaskId, setSelectedTaskId] = useState(null);
+  const [userSelected, setUserSelected] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [files, setFiles] = useState([]);
+
+  const handleFileChange = (e) => {
+    setFiles([...e.target.files]);
+  };
+
+  const handleTaskChange = (e) => {
+    setSelectedTask(e.target.value);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedTask) {
+      alert('Please select a task before uploading.');
+      return;
+    }
+
+    const data = new FormData();
+    files.forEach(file => {
+      data.append('files', file);
+    });
+    data.append('taskId', selectedTask);
+
+    try {
+      const response = await fetch(`http://localhost:3001/projects/${taskId}/tasks/${selectedTask}/solutionFiles`, {
+        method: 'POST',
+        body: data,
+        credentials: 'include'
+      });
+      console.log('details',selectedTask);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('Server response:', result);
+       window.location.reload();
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      alert('Error uploading files');
+    }
+  };
+
 
   useEffect(() => {
     if (projects && taskId) {
@@ -41,8 +94,7 @@ const ProjectView = ({ projects }) => {
   if (!taskDetails) {
     return null; // Render nothing if taskDetails is not available yet
   }
-
-  // Calculate number of completed tasks
+ 
  const numberOfCompletedTasks = taskDetails.tasks?.filter(task => task.status === 2)?.length ?? 0;
 
 // Calculate number of open tasks
@@ -112,8 +164,88 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
 
 
 
+  //assign
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
+ 
+  
+
+
+
+ const handleTaskSelect = (taskId) => {
+  setSelectedTaskId(taskId);
+  console.log('selectedid: ',selectedTaskId)
+  // Code to show modal
+ };
+
+
+  const assignTask = (taskId, user) => {
+    console.error('taskId:', taskId);
+    console.error('userid:', user.id);
+    if (!taskId || !user) {
+      console.log("Invalid task or user selection");
+      return;
+    }
+    // Assuming fetch API call or similar to backend
+    fetch('http://localhost:3001/assign', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ taskId: taskId, userId: user.id })
+    })
+    .then(response => {
+      if (!response.ok) throw new Error('Failed to assign task');
+      return response.json();
+    })
+    .then(data => {
+      console.log('Success:', data);
+      window.location.reload(); 
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+   };
+
+ const handleStatusChange = async (taskId, newStatus) => {
+  console.log('taskId',taskId);
+   console.log('newStatus',newStatus);
+  try {
+   
+    const response = await fetch('http://localhost:3001/updateTaskStatus', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ taskId, newStatus }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update task status');
+    }
+
+    // Handle success
+    console.log('Task status updated successfully');
+    window.location.reload();
+  } catch (error) {
+    // Handle error
+    console.error('Error updating task status:', error);
+  }
+};
+  //upload solution
+  
+
+
+
+  const filteredMembers = searchTerm.length === 0
+    ? taskDetails.team
+    : taskDetails.team.filter(member =>
+        member.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+   
 
  
+ 
+  
 
 
   return (
@@ -141,8 +273,8 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                 to="#"
                 className="btn add-btn"
                 data-bs-toggle="modal"
-                data-bs-target="#edit_project">
-                <i className="fa fa-plus" /> Edit Project
+                data-bs-target="#edit_projects">
+                <i className="fa fa-plus" /> Upload Solution
               </Link>
               <Link
                 to="/app/projects/task-board"
@@ -178,7 +310,7 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
               <div className="card-body">
                 <h5 className="card-title m-b-20">Uploaded image files</h5>
                 <div className="row">
-                  {taskDetails.files.filter(file => /\.(jpg|jpeg|png|gif)$/i.test(file.name)).map((file, index) => (
+                  {taskDetails.files && taskDetails.files.length > 0 ? (taskDetails.files.filter(file => /\.(jpg|jpeg|png|gif)$/i.test(file.name)) .map((file, index) => (
                     <div key={index} className="col-md-3 col-sm-4 col-lg-4 col-xl-3">
                       <div className="uploaded-box" onClick={() => handleImageClick(file)}>
                         <div className="uploaded-img">
@@ -226,7 +358,10 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                         </div>
                       </div>
                     </div>
-                  ))}
+                   ))
+                 ) : (
+                    <p>No images to display.</p>
+                 )}
                 </div>
               </div>
               {/* Modal for displaying the clicked image */}
@@ -264,7 +399,7 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
               <div className="card-body">
                 <h5 className="card-title m-b-20">Uploaded files</h5>
                 <ul className="files-list">
-                 {taskDetails.files.filter(file => !/\.(jpg|jpeg|png|gif)$/i.test(file.name)).map((file, index) => (
+                 {taskDetails.files && taskDetails.files.length > 0 ? (taskDetails.files.filter(file => !/\.(jpg|jpeg|png|gif)$/i.test(file.name)) .map((file, index) => (
                   <li>
                     <div className="files-cont">
                       <div className="file-type">
@@ -282,7 +417,7 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                           <Link to="#">{file.creator}</Link>
                         </span>{" "}
                         <span className="file-date">{file.date}</span>
-                        <div className="file-size">{file.size}</div>
+                        <div className="file-size">Size : {file.size}</div>
                       </div>
                       <ul className="files-action">
                         <li className="dropdown dropdown-action">
@@ -305,7 +440,10 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                       </ul>
                     </div>
                   </li>
-                 ))}
+                  ))
+                 ) : (
+                    <p>No files to display.</p>
+                 )}
                 </ul>
               </div>
             </div>               
@@ -345,15 +483,16 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                     <div className="task-list-container">
                       <div className="task-list-body">
                         <ul id="task-list">
-                         {taskDetails.tasks
-                           .filter(task => task.status === 0)
-                           .map(task => (
+                         {taskDetails.tasks?.length > 0 ? (taskDetails.tasks.filter(task => task.status === 0).map((task, index) => (
                              <li className="task">
                               <div className="task-container">
                                 <span className="task-action-btn task-check">
                                   <span
                                     className="action-circle large complete-btn"
-                                    title="Mark Complete">
+                                    title="Mark Complete"
+                                    onClick={() => handleStatusChange(task.id, 1)} 
+
+                                    >
                                     <i className="material-icons">check</i>
                                   </span>
                                 </span>
@@ -366,9 +505,12 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                                       <Link
                                         to="#"
                                         data-bs-toggle="modal"
-                                        data-bs-target="#assignee">
+                                        data-bs-target="#assignee"
+                                        onClick={() => handleTaskSelect(task.id)}
+
+                                        >
                                         <div className="avatar">
-                                          <img alt="" src={Avatar_02} />
+                                          <img alt="" src={task.assignee_image} />
                                         </div>
                                         <div className="assigned-info">
                                           <div className="task-head-title">
@@ -388,27 +530,20 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                                           </span>
                                        </div>
                                        <div className="due-info">
-                                          <div className="task-head-title">Due Date</div>
-                                          <DatePicker
-                                            selected={selectedDate}
-                                            onChange={(date) => setSelectedDate(date)}
-                                            dateFormat="MMM d, yyyy" // Example date format
-                                          />
-                                       </div>
-                                       <span className="remove-icon">
-                                          <i className="fa fa-close" />
-                                       </span>
+                                           <div className="task-head-title">
+                                              Due Date
+                                           </div>
+                                           <div className="due-date">{new Date(task.deadline).toLocaleDateString()}</div>
+                                         </div>
                                     </div>
-                                  </div> 
-                                  <span
-                                    className="action-circle large delete-btn"
-                                    title="Delete Task">
-                                    <i className="material-icons">delete</i>
-                                  </span> 
+                                  </div>
                                 </span>
                               </div>
                             </li>
-                          ))}
+                              ))
+                        ) : (
+                          <p>No pending tasks available.</p>
+                          )}
                         </ul>
                       </div>
                     </div>
@@ -419,15 +554,15 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                     <div className="task-list-container">
                       <div className="task-list-body">
                         <ul id="task-list">
-                         {taskDetails.tasks
-                           .filter(task => task.status === 1)
-                           .map(task => (
+                          {taskDetails.tasks?.length > 0 ? (taskDetails.tasks.filter(task => task.status === 1).map((task, index) => (
                             <li className="task">
-                            <div className="task-container">
+                             <div className="task-container">
                               <span className="task-action-btn task-check">
                                 <span
                                   className="action-circle large complete-btn"
-                                  title="Mark Complete">
+                                  title="Mark Complete"
+                                  onClick={() => handleStatusChange(task.id, 2)} 
+                                  >
                                   <i className="material-icons">check</i>
                                 </span>
                               </span>
@@ -442,7 +577,7 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                                         data-bs-toggle="modal"
                                         data-bs-target="#assignee">
                                         <div className="avatar">
-                                          <img alt="" src={Avatar_02} />
+                                          <img alt="" src={task.assignee_image} />
                                         </div>
                                         <div className="assigned-info">
                                           <div className="task-head-title">
@@ -470,23 +605,17 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                                               Due Date
                                            </div>
                                            <div className="due-date">{new Date(task.deadline).toLocaleDateString()}</div>
-
                                          </div>
                                        </Link>
-                                       <span className="remove-icon">
-                                         <i className="fa fa-close" />
-                                       </span>
                                    </div>
-                                  </div> 
-                                  <span
-                                    className="action-circle large delete-btn"
-                                    title="Delete Task">
-                                    <i className="material-icons">delete</i>
-                                  </span>
+                                  </div>
                                 </span>
                             </div>
                             </li>
-                           ))} 
+                             ))
+                        ) : (
+                          <p>No InProgress tasks available.</p>
+                          )}
                         </ul>
                       </div>
                     </div>
@@ -497,11 +626,9 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                     <div className="task-list-container">
                       <div className="task-list-body">
                         <ul id="task-list">
-                         {taskDetails.tasks
-                           .filter(task => task.status === 2)
-                           .map(task => (
+                          {taskDetails.tasks?.length > 0 ? (taskDetails.tasks.filter(task => task.status === 2).map((task, index) => (
                             <li className="completed task">
-                            <div className="task-container">
+                             <div className="task-container">
                               <span className="task-action-btn task-check">
                                 <span
                                   className="action-circle large complete-btn"
@@ -510,7 +637,7 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                                 </span>
                               </span>
                               <span className="task-label">
-                                {task.description}
+                                {task.description} 
                               </span>
                               <span className="task-action-btn task-btn-right">
                                   <div className="task-header">
@@ -518,9 +645,10 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                                       <Link
                                         to="#"
                                         data-bs-toggle="modal"
-                                        data-bs-target="#assignee">
+                                        data-bs-target="#assignee"
+                                        >
                                         <div className="avatar">
-                                          <img alt="" src={Avatar_02} />
+                                          <img alt="" src={task.assignee_image} />
                                         </div>
                                         <div className="assigned-info">
                                           <div className="task-head-title">
@@ -537,7 +665,9 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                                        <Link
                                          to="#"
                                          data-bs-toggle="modal"
-                                         data-bs-target="#assignee">
+                                         data-bs-target="#assignee"
+
+                                         >
                                          <div className="due-icon">
                                             <span>
                                               <i className="material-icons">date_range</i>
@@ -554,16 +684,14 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                                          <i className="fa fa-close" />
                                        </span>
                                    </div>
-                                  </div> 
-                                  <span
-                                    className="action-circle large delete-btn"
-                                    title="Delete Task">
-                                    <i className="material-icons">delete</i>
-                                  </span>
+                                  </div>
                                 </span>
                             </div>
                             </li>
-                           ))} 
+                                ))
+                        ) : (
+                          <p> No completed tasks available.</p>
+                          )} 
                         </ul>
                       </div>
                     </div>
@@ -614,7 +742,7 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                             </Link>
                             <Link className="dropdown-item" to="#">
                               <i className="far fa-dot-circle text-primary" />{" "}
-                              Normal
+                              Medium
                             </Link>
                             <Link className="dropdown-item" to="#">
                               <i className="far fa-dot-circle text-success" />{" "}
@@ -643,9 +771,9 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                             aria-expanded="false">
                             <i
                               className={`far fa-dot-circle ${
-                              taskDetails.activeStatus === 'Pending'
+                              taskDetails.activestatus === 'Pending'
                                  ? 'text-danger'
-                                 : taskDetails.activeStatus === 'In Progress'
+                                 : taskDetails.activestatus === 'In Progress'
                                  ? 'text-primary'
                                  : 'text-success'
                                       }`}
@@ -692,7 +820,7 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                 </h6>
                 <ul className="list-box">
                   <li>
-                    <Link to="/app/profile/employee-profile">
+                    <Link to={`/app/profile/employee-profile/${taskDetails.leadername.id}`}>
                       <div className="list-item">
                         <div className="list-left">
                           <span className="avatar">
@@ -718,7 +846,7 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                 <ul className="list-box">
                   {taskDetails.team.map((member, index) => (
                    <li key={index}>
-                    <Link to="/app/profile/employee-profile">
+                    <Link to={`/app/profile/employee-profile/${member.id}`}>
                       <div className="list-item">
                         <div className="list-left">
                           <span className="avatar">
@@ -744,240 +872,142 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
       {/* /Page Content */}
 
     
+
+
      {/* Assignee Modal */}
         <div id="assignee" className="modal custom-modal fade" role="dialog">
-          <div className="modal-dialog modal-dialog-centered" role="document">
-            <div className="modal-content">
-              <div className="modal-header">
+    <div className="modal-dialog modal-dialog-centered" role="document">
+        <div className="modal-content">
+            <div className="modal-header">
                 <h5 className="modal-title">Assign to this task</h5>
                 <button
-                  type="button"
-                  className="close"
-                  data-bs-dismiss="modal"
-                  aria-label="Close">
-                  <span aria-hidden="true">×</span>
+                    type="button"
+                    className="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                    onClick={() => setUserSelected(false)} // Reset on close
+                >
+                    <span aria-hidden="true">×</span>
                 </button>
-              </div>
-              <div className="modal-body">
+            </div>
+            <div className="modal-body">
                 <div className="input-group m-b-30">
-                  <input
-                    placeholder="Search to add"
-                    className="form-control search-input"
-                    type="text"
-                  />
-                  <button className="btn btn-primary">Search</button>
+                    <input
+                        placeholder="Search to add"
+                        className="form-control search-input"
+                        type="text"
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                    />
+                    <button className="btn btn-primary">Search</button>
                 </div>
                 <div>
-                  <ul className="chat-user-list">
-                    <li>
-                      <a href="#">
-                        <div className="media d-flex">
-                          <span className="avatar">
-                            <img alt="" src={Avatar_09} />
-                          </span>
-                          <div className="media-body align-self-center text-nowrap">
-                            <div className="user-name">Richard Miles</div>
-                            <span className="designation">Web Developer</span>
-                          </div>
-                        </div>
-                      </a>
-                    </li>
-                    <li>
-                      <a href="#">
-                        <div className="media d-flex">
-                          <span className="avatar">
-                            <img alt="" src={Avatar_10} />
-                          </span>
-                          <div className="media-body align-self-center text-nowrap">
-                            <div className="user-name">John Smith</div>
-                            <span className="designation">
-                              Android Developer
-                            </span>
-                          </div>
-                        </div>
-                      </a>
-                    </li>
-                    <li>
-                      <a href="#">
-                        <div className="media d-flex">
-                          <span className="avatar">
-                            <img alt="" src={Avatar_16} />
-                          </span>
-                          <div className="media-body align-self-center text-nowrap">
-                            <div className="user-name">Jeffery Lalor</div>
-                            <span className="designation">Team Leader</span>
-                          </div>
-                        </div>
-                      </a>
-                    </li>
-                  </ul>
+                    <ul className="chat-user-list">
+                        {userSelected ? 
+                            (
+                                <li>
+                                    <div className="media d-flex">
+                                        <span className="avatar">
+                                            <img alt="" src={selectedUser.image || "default_avatar.png"} />
+                                        </span>
+                                        <div className="media-body align-self-center text-nowrap">
+                                            <div className="user-name">{selectedUser.name}</div>
+                                            <span className="designation">{selectedUser.role}</span>
+                                        </div>
+                                    </div>
+                                </li>
+                            ) :
+                            filteredMembers.map((member) => (
+                                <li key={member.id} onClick={() => {
+                                        setSelectedUser(member);
+                                        setUserSelected(true);
+                                    }}>
+                                    <div className="media d-flex">
+                                        <span className="avatar">
+                                            <img alt="" src={member.image || "default_avatar.png"} />
+                                        </span>
+                                        <div className="media-body align-self-center text-nowrap">
+                                            <div className="user-name">{member.name}</div>
+                                            <span className="designation">{member.role}</span>
+                                        </div>
+                                    </div>
+                                </li>
+                            ))
+                        }
+                    </ul>
                 </div>
                 <div className="submit-section">
-                  <button className="btn btn-primary submit-btn">Assign</button>
+                    <button className="btn btn-primary submit-btn" onClick={() => assignTask(selectedTaskId, selectedUser)}>
+                        Assign
+                    </button>
                 </div>
-              </div>
             </div>
-          </div>
         </div>
+    </div>
+</div>
+
 
         {/* /Assignee Modal */}
 
 
-      {/* Assign Leader Modal */}
+     
 
-      <div id="assign_leader" className="modal custom-modal fade" role="dialog">
-        <div className="modal-dialog modal-dialog-centered" role="document">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Assign Leader to this project</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close">
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="input-group m-b-30">
-                <input
-                  placeholder="Search to add"
-                  className="form-control search-input"
-                  type="text"
-                />
-                <button className="btn btn-primary">Search</button>
-              </div>
-              <div>
-                <ul className="chat-user-list">
-                  <li>
-                    <a href="#">
-                      <div className="media d-flex">
-                        <span className="avatar">
-                          <img alt="" src={Avatar_09} />
-                        </span>
-                        <div className="media-body align-self-center text-nowrap">
-                          <div className="user-name">Richard Miles</div>
-                          <span className="designation">Web Developer</span>
-                        </div>
-                      </div>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#">
-                      <div className="media d-flex">
-                        <span className="avatar">
-                          <img alt="" src={Avatar_10} />
-                        </span>
-                        <div className="media-body align-self-center text-nowrap">
-                          <div className="user-name">John Smith</div>
-                          <span className="designation">Android Developer</span>
-                        </div>
-                      </div>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#">
-                      <div className="media d-flex">
-                        <span className="avatar">
-                          <img alt="" src={Avatar_16} />
-                        </span>
-                        <div className="media-body align-self-center text-nowrap">
-                          <div className="user-name">Jeffery Lalor</div>
-                          <span className="designation">Team Leader</span>
-                        </div>
-                      </div>
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div className="submit-section">
-                <button className="btn btn-primary submit-btn">Assign</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* /Assign Leader Modal */}
-      {/* Assign User Modal */}
-
-      <div id="assign_user" className="modal custom-modal fade" role="dialog">
-        <div className="modal-dialog modal-dialog-centered" role="document">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Assign the user to this project</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close">
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="input-group m-b-30">
-                <input
-                  placeholder="Search to add"
-                  className="form-control search-input"
-                  type="text"
-                />
-                <button className="btn btn-primary">Search</button>
-              </div>
-              <div>
-                <ul className="chat-user-list">
-                  <li>
-                    <a href="#">
-                      <div className="media d-flex">
-                        <span className="avatar">
-                          <img alt="" src={Avatar_09} />
-                        </span>
-                        <div className="media-body align-self-center text-nowrap">
-                          <div className="user-name">Richard Miles</div>
-                          <span className="designation">Web Developer</span>
-                        </div>
-                      </div>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#">
-                      <div className="media d-flex">
-                        <span className="avatar">
-                          <img alt="" src={Avatar_10} />
-                        </span>
-                        <div className="media-body align-self-center text-nowrap">
-                          <div className="user-name">John Smith</div>
-                          <span className="designation">Android Developer</span>
-                        </div>
-                      </div>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#">
-                      <div className="media d-flex">
-                        <span className="avatar">
-                          <img alt="" src={Avatar_16} />
-                        </span>
-                        <div className="media-body align-self-center text-nowrap">
-                          <div className="user-name">Jeffery Lalor</div>
-                          <span className="designation">Team Leader</span>
-                        </div>
-                      </div>
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div className="submit-section">
-                <button className="btn btn-primary submit-btn">Assign</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* /Assign User Modal */}
       {/* Edit Project Modal */}
-      <Editproject />
+       <div id="edit_projects" className="modal custom-modal fade" role="dialog">
+    <div className="modal-dialog modal-dialog-centered" role="document">
+        <div className="modal-content">
+            <div className="modal-header">
+                <h5 className="modal-title">Upload Solution</h5>
+                <button
+                    type="button"
+                    className="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                >
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div className="modal-body">
+                <form onSubmit={handleSubmit}>
+                    <div className="input-group mb-3">
+                        <label className="input-group-text" htmlFor="task-select">Select Task:</label>
+                        <select 
+                            className="form-select"
+                            id="task-select"
+                            value={selectedTask}
+                            onChange={handleTaskChange}
+                        >
+                            <option value="">Select a Task</option>
+                            {taskDetails.tasks.map(task => (
+                                <option key={task.id} value={task.id}>{task.description}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="input-group mb-3">
+                        <label className="form-label" htmlFor="file-input">Solution Files :  </label>
+                        <input 
+                            type="file" 
+                            className="form-control" 
+                            id="file-input"
+                            multiple 
+                            onChange={handleFileChange}
+                        />
+                    </div>
+                    <div className="submit-section">
+                        <button type="submit" className="btn btn-primary">Upload Files</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
       {/* /Edit Project Modal */}
+
       <Offcanvas />
+
     </div>
   );
 };

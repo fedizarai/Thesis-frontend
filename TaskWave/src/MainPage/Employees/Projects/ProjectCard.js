@@ -20,7 +20,7 @@ import {
   Avatar_01,
 } from "../../../Entryfile/imagepath";
 
-const ProjectCard = ({ project }) =>  {
+const ProjectCard = ({ project , onEditClick ,onDeleteClick}) =>  {
 
   
 
@@ -50,6 +50,7 @@ const ProjectCard = ({ project }) =>  {
                       <Link
                         className="dropdown-item"
                         to="#"
+                        onClick={() => onEditClick(id)}
                         data-bs-toggle="modal"
                         data-bs-target="#edit_project">
                         <i className="fa fa-pencil m-r-5" /> Edit
@@ -57,6 +58,7 @@ const ProjectCard = ({ project }) =>  {
                       <Link
                         className="dropdown-item"
                         to="#"
+                        onClick={() => onDeleteClick(id)}
                         data-bs-toggle="modal"
                         data-bs-target="#delete_project">
                         <i className="fa fa-trash m-r-5" /> Delete

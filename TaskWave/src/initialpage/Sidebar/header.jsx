@@ -94,28 +94,8 @@ const Header = (props) => {
           </div>
         </li>
         {/* /Search */}
-        {/* Flag */}
-        <li className="nav-item dropdown has-arrow flag-nav">
-          <Link
-            className="nav-link dropdown-toggle"
-            data-bs-toggle="dropdown"
-            to="#"
-            role="button">
-            <img src={lnEnglish} alt="#" height={20} /> <span>English</span>
-          </Link>
-          <div className="dropdown-menu dropdown-menu-end dropdown-menu-right">
-            <Link to="#" className="dropdown-item">
-              <img src={lnEnglish} alt="" height={16} /> English
-            </Link>
-            <Link to="#" className="dropdown-item">
-              <img src={lnFrench} alt="" height={16} /> French
-            </Link>
-            <Link to="#" className="dropdown-item">
-              <img src={lnGerman} alt="" height={16} /> German
-            </Link>
-          </div>
-        </li>
-        {/* /Flag */}
+       
+
         {/* Notifications */}
         <li className="nav-item dropdown">
           <Link
@@ -124,7 +104,7 @@ const Header = (props) => {
             data-bs-toggle="dropdown"
             onClick={() => setNotifications(!notification)}>
             <i className="fa-regular fa-bell" />{" "}
-            <span className="badge badge-pill">3</span>
+            <span className="badge badge-pill"></span>
           </Link>
           <div
             className={`dropdown-menu dropdown-menu-end notifications ${
@@ -132,13 +112,7 @@ const Header = (props) => {
             }`}>
             <div className="topnav-dropdown-header">
               <span className="notification-title">Notifications</span>
-              <Link
-                to="#"
-                onClick={() => setNotifications(false)}
-                className="clear-noti">
-                {" "}
-                Clear All{" "}
-              </Link>
+              
             </div>
             <div className="noti-content">
               <ul className="notification-list">
@@ -149,7 +123,7 @@ const Header = (props) => {
                         onClick={() =>
                           localStorage.setItem("minheight", "true")
                         }
-                        to="/app/administrator/activities">
+                        to="/app/projects/project_dashboard">
                         <div className="media d-flex">
                           <span className="avatar flex-shrink-0">
                             <img alt="" src={val.image} />
@@ -175,16 +149,13 @@ const Header = (props) => {
                 })}
               </ul>
             </div>
-            <div className="topnav-dropdown-footer">
-              <Link
-                onClick={() => localStorage.setItem("minheight", "true")}
-                to="/app/administrator/activities">
-                View all Notifications
-              </Link>
-            </div>
           </div>
         </li>
         {/* /Notifications */}
+
+
+
+
         {/* Message Notifications */}
         <li className="nav-item dropdown">
           <Link
@@ -192,7 +163,7 @@ const Header = (props) => {
             className="dropdown-toggle nav-link"
             data-bs-toggle="dropdown">
             <i className="fa-regular fa-comment" />{" "}
-            <span className="badge badge-pill">8</span>
+            <span className="badge badge-pill"></span>
           </Link>
           <div className="dropdown-menu dropdown-menu-end notifications">
             <div className="topnav-dropdown-header">
@@ -243,6 +214,8 @@ const Header = (props) => {
           </div>
         </li>
         {/* /Message Notifications */}
+
+
         <li className="nav-item dropdown has-arrow main-drop">
           <Link
             to="#"
@@ -255,7 +228,7 @@ const Header = (props) => {
             <span>{ProfileName ? ` ${ProfileName}` : "Admin"}</span>
           </Link>
           <div className="dropdown-menu dropdown-menu-end">
-            <Link className="dropdown-item" to="/app/profile/employee-profile/1">
+            <Link className="dropdown-item" to="/app/profile/Profile">
               My Profile
             </Link>
             <Link className="dropdown-item" to="/login">

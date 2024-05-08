@@ -91,15 +91,6 @@ const Sidebar = (props) => {
                         Admin Dashboard
                       </Link>
                     </li>
-                    <li>
-                      <Link
-                        className={
-                          pathname.includes("main/employee-") ? "active" : ""
-                        }
-                        to="/app/main/employee-dashboard">
-                        Employee Dashboard
-                      </Link>
-                    </li>
                   </ul>
                 ) : (
                   ""
@@ -125,9 +116,6 @@ const Sidebar = (props) => {
                         to="/conversation/chat">
                         Chat
                       </Link>
-                    </li>
-                    <li>
-                      <Link to="/email/inbox">Email</Link>
                     </li>
                   </ul>
                 ) : (

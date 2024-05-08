@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { Link } from "react-router-dom";
 import {
@@ -17,53 +17,53 @@ import "antd/dist/antd.min.css";
 import Offcanvas from "../../../Entryfile/offcanvance";
 
 const PerformanceIndicator = () => {
-  const data = [
-    {
-      id: 1,
-      image: Avatar_02,
-      name: "John Doe",
-      designation: "IOS Developer",
-      department: "IOS",
-      creatat: "1 Jan 2013",
-      status: "Active",
-    },
-    {
-      id: 2,
-      image: Avatar_05,
-      name: "Richard Miles",
-      designation: "Web Designer",
-      department: "Design",
-      creatat: "18 Mar 2014",
-      status: "Active",
-    },
-    {
-      id: 3,
-      image: Avatar_11,
-      name: "John Smith",
-      designation: "Android Developer",
-      department: "Android",
-      creatat: "1 Apr 2014",
-      status: "Inactive",
-    },
-    {
-      id: 4,
-      image: Avatar_10,
-      name: "Jeffrey Warden",
-      designation: "Web Designer",
-      department: "Design",
-      creatat: "16 Jun 2013",
-      status: "Active",
-    },
-    {
-      id: 5,
-      image: Avatar_12,
-      name: "Bernardo Galaviz",
-      designation: "Web Designer",
-      department: "Design",
-      creatat: "1 Jan 2013",
-      status: "Active",
-    },
-  ];
+  const [users, setUsers] = useState([]);
+  const [projects, setProjects] = useState([]);
+  
+
+  useEffect(() => {
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch("http://localhost:3001/projects");
+      if (!response.ok) {
+        throw new Error("Failed to fetch projects");
+      }
+      const projectsData = await response.json();
+      return projectsData;
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const projectsData = await fetchProjects(); // Ensure projects are fetched first
+      const response = await fetch("http://localhost:3001/users");
+      if (!response.ok) {
+        throw new Error("Failed to fetch users");
+      }
+      const usersData = await response.json();
+      // Now we have both users and projects
+      const enrichedUsers = usersData.map(user => {
+        const assignedTasks = projectsData.reduce((acc, project) => acc + project.tasks.filter(task => task.assignee === user.name).length, 0);
+        const completedTasks = projectsData.reduce((acc, project) => acc + project.tasks.filter(task => task.assignee === user.name && task.status === 0).length, 0);
+        const performanceScore = assignedTasks > 0 ? Math.round((completedTasks / assignedTasks) * 100) : 0;
+        
+        const performanceGrade = performanceScore < 34 ? "Bad" :
+                                 performanceScore < 67 ? "Moderate" : "Good";
+
+        return { ...user, assignedTasks, completedTasks, performanceScore, performanceGrade };
+      });
+      setUsers(enrichedUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
+
+  fetchUsers();
+}, []);
+
+
   useEffect(() => {
     if ($(".select").length > 0) {
       $(".select").select2({
@@ -74,109 +74,38 @@ const PerformanceIndicator = () => {
   });
 
   const columns = [
-    {
-      title: "#",
-      dataIndex: "id",
-      sorter: (a, b) => a.id.length - b.id.length,
-    },
-    {
-      title: "Designation",
-      dataIndex: "designation",
-      sorter: (a, b) => a.designation.length - b.designation.length,
-    },
-
-    {
-      title: "Department",
-      dataIndex: "department",
-      sorter: (a, b) => a.department.length - b.department.length,
-    },
-    {
-      title: "Added By",
-      dataIndex: "name",
-      render: (text, record) => (
-        <h2 className="table-avatar">
-          <Link to="/app/profile/employee-profile" className="avatar">
-            <img alt="" src={record.image} />
-          </Link>
-          <Link to="/app/profile/employee-profile">
-            {text} <span>{record.role}</span>
-          </Link>
-        </h2>
-      ),
-      sorter: (a, b) => a.name.length - b.name.length,
-    },
-    {
-      title: "Create At",
-      dataIndex: "creatat",
-      sorter: (a, b) => a.creatat.length - b.creatat.length,
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      render: (text) => (
-        <div className="dropdown action-label">
-          <Link
-            className="btn btn-white btn-sm btn-rounded dropdown-toggle"
-            to="#"
-            data-bs-toggle="dropdown"
-            aria-expanded="false">
-            <i
-              className={
-                text === "Inactive"
-                  ? "far fa-dot-circle text-danger"
-                  : "far fa-dot-circle text-success"
-              }
-            />{" "}
-            {text}
-          </Link>
-          <div className="dropdown-menu">
-            <Link className="dropdown-item" to="#">
-              <i className="far fa-dot-circle text-success" /> Active
-            </Link>
-            <Link className="dropdown-item" to="#">
-              <i className="far fa-dot-circle text-danger" /> Inactive
-            </Link>
-          </div>
-        </div>
-      ),
-      sorter: (a, b) => a.status.length - b.status.length,
-    },
-    {
-      title: "Action",
-      render: () => (
-        <div className="dropdown dropdown-action text-end">
-          <Link
-            to="#"
-            className="action-icon dropdown-toggle"
-            data-bs-toggle="dropdown"
-            aria-expanded="false">
-            <i className="material-icons">more_vert</i>
-          </Link>
-          <div className="dropdown-menu dropdown-menu-right">
-            <Link
-              className="dropdown-item"
-              to="#"
-              data-bs-toggle="modal"
-              data-bs-target="#edit_indicator">
-              <i className="fa fa-pencil m-r-5" /> Edit
-            </Link>
-            <Link
-              className="dropdown-item"
-              to="#"
-              data-bs-toggle="modal"
-              data-bs-target="#delete_indicator">
-              <i className="fa fa-trash m-r-5" /> Delete
-            </Link>
-          </div>
-        </div>
-      ),
-    },
+    
+  {
+    title: "Name",
+    dataIndex: "name",
+    render: (text, record) => (
+      <h2 className="table-avatar">
+        <Link to={`/app/profile/employee-profile/${record.id}`} className="avatar">
+          <img alt="" src={record.image} />
+        </Link>
+        <Link to={`/app/profile/employee-profile/${record.id}`}>
+          {text} <span>{record.role}</span>
+        </Link>
+      </h2>
+    ),
+    sorter: (a, b) => a.name.localeCompare(b.name),
+  },
+   {
+    title: "Employee ID",
+    dataIndex: "employee_id",
+    sorter: (a, b) => a.employee_id - b.employee_id,
+  },
+  { title: "Role", dataIndex: "role", sorter: (a, b) => a.role.localeCompare(b.role) },
+    { title: "Assigned Tasks", dataIndex: "assignedTasks", align: 'center',sorter: (a, b) => a.assignedTasks - b.assignedTasks },
+    { title: "Completed Tasks", dataIndex: "completedTasks", align: 'center',sorter: (a, b) => a.completedTasks - b.completedTasks },
+    { title: "Score", dataIndex: "performanceScore", align: 'center',sorter: (a, b) => a.performanceScore - b.performanceScore },
+    { title: "Performance Grade",align: 'center', dataIndex: "performanceGrade" }
   ];
   return (
     <>
       <div className="page-wrapper">
         <Helmet>
-          <title>Performance Indicator - HRMS Admin Template</title>
+          <title>Performance</title>
           <meta name="description" content="Login page" />
         </Helmet>
         {/* Page Content */}
@@ -193,15 +122,6 @@ const PerformanceIndicator = () => {
                   <li className="breadcrumb-item active">Performance</li>
                 </ul>
               </div>
-              <div className="col-auto float-end ms-auto">
-                <Link
-                  to="#"
-                  className="btn add-btn"
-                  data-bs-toggle="modal"
-                  data-bs-target="#add_indicator">
-                  <i className="fa fa-plus" /> Add New
-                </Link>
-              </div>
             </div>
           </div>
           {/* /Page Header */}
@@ -211,7 +131,7 @@ const PerformanceIndicator = () => {
                 <Table
                   className="table-striped"
                   pagination={{
-                    total: data.length,
+                    total: users.length,
                     showTotal: (total, range) =>
                       `Showing ${range[0]} to ${range[1]} of ${total} entries`,
                     showSizeChanger: true,
@@ -221,7 +141,7 @@ const PerformanceIndicator = () => {
                   style={{ overflowX: "auto" }}
                   columns={columns}
                   // bordered
-                  dataSource={data}
+                  dataSource={users}
                   rowKey={(record) => record.id}
                   // onChange={this.handleTableChange}
                 />
@@ -230,464 +150,7 @@ const PerformanceIndicator = () => {
           </div>
         </div>
         {/* /Page Content */}
-        {/* Add Performance Indicator Modal */}
-        <div
-          id="add_indicator"
-          className="modal custom-modal fade"
-          role="dialog">
-          <div
-            className="modal-dialog modal-dialog-centered modal-lg"
-            role="document">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Set New Indicator</h5>
-                <button
-                  type="button"
-                  className="close"
-                  data-bs-dismiss="modal"
-                  aria-label="Close">
-                  <span aria-hidden="true">×</span>
-                </button>
-              </div>
-              <div className="modal-body">
-                <form>
-                  <div className="row">
-                    <div className="col-sm-12">
-                      <div className="input-block">
-                        <label className="col-form-label">Designation</label>
-                        <select className="select">
-                          <option>Select Designation</option>
-                          <option>Web Designer</option>
-                          <option>IOS Developer</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="col-sm-6">
-                      <h4 className="modal-sub-title">Technical</h4>
-                      <div className="input-block">
-                        <label className="col-form-label">
-                          Customer Experience
-                        </label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">Marketing</label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">Management</label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">Administration</label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">
-                          Presentation Skill
-                        </label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">
-                          Quality Of Work
-                        </label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">Efficiency</label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="col-sm-6">
-                      <h4 className="modal-sub-title">Organizational</h4>
-                      <div className="input-block">
-                        <label className="col-form-label">Integrity</label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">
-                          Professionalism
-                        </label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">Team Work</label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">
-                          Critical Thinking
-                        </label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">
-                          Conflict Management
-                        </label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">Attendance</label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">
-                          Ability To Meet Deadline
-                        </label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="col-sm-12">
-                      <div className="input-block">
-                        <label className="col-form-label">Status</label>
-                        <select className="select">
-                          <option>Active</option>
-                          <option>Inactive</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="submit-section">
-                    <button className="btn btn-primary submit-btn">
-                      Submit
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* /Add Performance Indicator Modal */}
-        {/* Edit Performance Indicator Modal */}
-        <div
-          id="edit_indicator"
-          className="modal custom-modal fade"
-          role="dialog">
-          <div
-            className="modal-dialog modal-dialog-centered modal-lg"
-            role="document">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Edit Performance Indicator</h5>
-                <button
-                  type="button"
-                  className="close"
-                  data-bs-dismiss="modal"
-                  aria-label="Close">
-                  <span aria-hidden="true">×</span>
-                </button>
-              </div>
-              <div className="modal-body">
-                <form>
-                  <div className="row">
-                    <div className="col-sm-12">
-                      <div className="input-block">
-                        <label className="col-form-label">Designation</label>
-                        <select className="select">
-                          <option>Select Designation</option>
-                          <option>Web Designer</option>
-                          <option>IOS Developer</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="col-sm-6">
-                      <h4 className="modal-sub-title">Technical</h4>
-                      <div className="input-block">
-                        <label className="col-form-label">
-                          Customer Experience
-                        </label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">Marketing</label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">Management</label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">Administration</label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">
-                          Presentation Skill
-                        </label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">
-                          Quality Of Work
-                        </label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">Efficiency</label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="col-sm-6">
-                      <h4 className="modal-sub-title">Organizational</h4>
-                      <div className="input-block">
-                        <label className="col-form-label">Integrity</label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">
-                          Professionalism
-                        </label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">Team Work</label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">
-                          Critical Thinking
-                        </label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">
-                          Conflict Management
-                        </label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">Attendance</label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                      <div className="input-block">
-                        <label className="col-form-label">
-                          Ability To Meet Deadline
-                        </label>
-                        <select className="select">
-                          <option>None</option>
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
-                          <option>Expert / Leader</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="col-sm-12">
-                      <div className="input-block">
-                        <label className="col-form-label">Status</label>
-                        <select className="select">
-                          <option>Active</option>
-                          <option>Inactive</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="submit-section">
-                    <button className="btn btn-primary submit-btn">Save</button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* /Edit Performance Indicator Modal */}
-        {/* Delete Performance Indicator Modal */}
-        <div
-          className="modal custom-modal fade"
-          id="delete_indicator"
-          role="dialog">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-body">
-                <div className="form-header">
-                  <h3>Delete Performance Indicator List</h3>
-                  <p>Are you sure want to delete?</p>
-                </div>
-                <div className="modal-btn delete-action">
-                  <div className="row">
-                    <div className="col-6">
-                      <Link to="" className="btn btn-primary continue-btn">
-                        Delete
-                      </Link>
-                    </div>
-                    <div className="col-6">
-                      <Link
-                        to=""
-                        data-bs-dismiss="modal"
-                        className="btn btn-primary cancel-btn">
-                        Cancel
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* /Delete Performance Indicator Modal */}
+        
       </div>
       <Offcanvas />
     </>

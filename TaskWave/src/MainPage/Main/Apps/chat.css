@@ -1,0 +1,5 @@
+.chat-box {
+    max-height: 500px; /* Adjust based on your layout needs */
+    overflow-y: auto;  /* Allows vertical scrolling */
+    position: relative; /* Helps contain the layout */
+}

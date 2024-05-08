@@ -104,9 +104,9 @@ const Registrationpage = (props) => {
           <div className="container">
             {/* Account Logo */}
             <div className="account-logo">
-              <Link to="/app/main/dashboard">
-                <img src={Applogo} alt="Dreamguy's Technologies" />
-              </Link>
+              
+                <img src={Applogo} alt="logo" />
+              
             </div>
             {/* /Account Logo */}
             <div className="account-box">

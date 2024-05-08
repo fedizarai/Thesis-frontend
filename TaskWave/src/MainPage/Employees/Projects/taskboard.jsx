@@ -90,13 +90,13 @@ const TaskBoard = ({projects}) => {
                               <div
                                 className="progress-bar"
                                 role="progressbar"
-                                style={{ width: `${Math.round((project.tasks.filter(task => task.status === 2).length /  project.tasks.length) * 100)}%`}}
+                                style={{width: `${project.tasks && project.tasks.length > 0 ? Math.round((project.tasks.filter(task => task.status === 2).length / project.tasks.length) * 100): 0}%`}}
                                 aria-valuenow={20}
                                 aria-valuemin={0}
                                 aria-valuemax={100}
                               />
                             </div>
-                            <span>{Math.round((project.tasks.filter(task => task.status === 2).length /  project.tasks.length) * 100)}%</span>
+                            <span>{project.tasks && project.tasks.length > 0 ? `${Math.round((project.tasks.filter(task => task.status === 2).length / project.tasks.length) * 100)}%`: '0%'}</span>
                           </div>
                           <div className="kanban-footer">
                             <span className="task-info-cont">
@@ -168,13 +168,13 @@ const TaskBoard = ({projects}) => {
                               <div
                                 className="progress-bar"
                                 role="progressbar"
-                                style={{ width: `${Math.round((project.tasks.filter(task => task.status === 2).length / project.tasks.length) * 100)}%`}}
+                                style={{width: `${project.tasks && project.tasks.length > 0 ? Math.round((project.tasks.filter(task => task.status === 2).length / project.tasks.length) * 100): 0}%`}}
                                 aria-valuenow={20}
                                 aria-valuemin={0}
                                 aria-valuemax={100}
                               />
                             </div>
-                            <span>{Math.round((project.tasks.filter(task => task.status === 2).length / project.tasks.length) * 100)}%</span>
+                            <span>{project.tasks && project.tasks.length > 0 ? `${Math.round((project.tasks.filter(task => task.status === 2).length / project.tasks.length) * 100)}%`: '0%'}</span>
                           </div>
                           <div className="kanban-footer">
                             <span className="task-info-cont">
@@ -246,13 +246,13 @@ const TaskBoard = ({projects}) => {
                               <div
                                 className="progress-bar"
                                 role="progressbar"
-                                style={{ width: `${Math.round((project.tasks.filter(task => task.status === 2).length / project.tasks.length) * 100)}%`}}
+                                style={{width: `${project.tasks && project.tasks.length > 0 ? Math.round((project.tasks.filter(task => task.status === 2).length / project.tasks.length) * 100): 0}%`}}
                                 aria-valuenow={20}
                                 aria-valuemin={0}
                                 aria-valuemax={100}
                               />
                             </div>
-                            <span>{Math.round((project.tasks.filter(task => task.status === 2).length / project.tasks.length) * 100)}%</span>
+                            <span>{project.tasks && project.tasks.length > 0 ? `${Math.round((project.tasks.filter(task => task.status === 2).length / project.tasks.length) * 100)}%`: '0%'}</span>
                           </div>
                           <div className="kanban-footer">
                             <span className="task-info-cont">

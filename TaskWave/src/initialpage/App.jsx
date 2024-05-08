@@ -10,7 +10,6 @@ import LockScreen from './lockscreen'
 
 //Main App
 import DefaultLayout from './Sidebar/DefaultLayout';
-import Emaillayout from './Sidebar/emaillayout';
 import chatlayout from './Sidebar/chatlayout';
 
 import uicomponents from '../MainPage/UIinterface/components';
@@ -48,11 +47,8 @@ export default class App extends Component {
                 <Route path="/register" component={RegistrationPage} />
                 <Route path="/otp" component={OTP} />
                 <Route path="/lockscreen" component={LockScreen} />
-
                 <Route path="/app" component={DefaultLayout} />
-                <Route path="/email" component={Emaillayout} />
                 <Route path="/conversation" component={chatlayout} />
-
                 <Route path="/ui-components" component={uicomponents} />
                 <Route path="/error-404" component={Error404} />
                 <Route path="/error-500" component={Error500} />

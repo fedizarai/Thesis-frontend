@@ -33,6 +33,7 @@ const Loginpage = (props) => {
          'Content-Type': 'application/json',
       },
       body: JSON.stringify(data),
+      credentials: 'include'
     })
     .then(response => {
       if (response.ok) {
@@ -70,14 +71,14 @@ const Loginpage = (props) => {
           <div className="container">
             {/* Account Logo */}
             <div className="account-logo">
-              <Link to="/app/main/dashboard">
-                <img src={Applogo} alt="Dreamguy's Technologies" />
-              </Link>
+              
+                <img src={Applogo} alt="logo" />
+              
             </div>
             {/* /Account Logo */}
             <div className="account-box">
               <div className="account-wrapper">
-                <h3 className="account-title">Login</h3>
+                <h3 className="account-title">Welcome to TaskWave</h3>
                 <p className="account-subtitle">Access to our dashboard</p>
                 {/* Account Form */}
                 <div>

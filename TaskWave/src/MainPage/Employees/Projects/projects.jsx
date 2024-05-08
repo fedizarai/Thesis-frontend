@@ -37,6 +37,9 @@ const Projects = ({projects}) => {
   const [selectedUser, setSelectedUser] = useState('');
   const [teamMembers, setTeamMembers] = useState([]);
   const [searchPriority, setSearchPriority] = useState('');
+  const [projectToEditId, setProjectToEditId] = useState(null);
+  const [projectToDelete, setProjectToDelete] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     workinghours: '',
@@ -50,20 +53,53 @@ const Projects = ({projects}) => {
     files: '',
     team: '',
     tasks: [
-      { description: '', deadline: null }  // Initialize with one task object for better user guidance
+      { description: '', deadline: null }  
     ],
   });
+
+  const handleEditProjectClick = (id) => {
+    setProjectToEditId(id); 
+    
+  };
+  console.log('projectToDelete',projectToDelete);
+  const handleDeleteProjectClick = (projectId) => {
+    setProjectToDelete(projectId);
+    
+  };
+const handleDeleteProject = async (projectId) => {
+  try {
+    const response = await fetch(`http://localhost:3001/projects/${projectId}`, {
+      method: 'DELETE'
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete project');
+    }
+    
+    console.log('Project deleted successfully');
+    window.location.reload();
+  } catch (error) {
+    console.error('Error deleting project:', error);
+    
+  }
+};
+
+
  const handleFileChange = (e) => {
   setFormData(prevFormData => ({
     ...prevFormData,
-    files: e.target.files // This captures all selected files
+    files: e.target.files 
   }));
 };
 
-  const handleAddTask = () => {
-    const newTasks = [...formData.tasks, { description: '', deadline: null }];
-    setFormData({ ...formData, tasks: newTasks });
- };
+const handleAddTask = (event) => {
+  event.preventDefault(); 
+
+  
+  const newTask = { description: '', deadline: new Date() }; 
+  const updatedTasks = [...formData.tasks, newTask];
+  setFormData({ ...formData, tasks: updatedTasks });
+};
+
 
   const handleTaskChange = (index, field, value) => {
     const newTasks = [...formData.tasks];
@@ -221,11 +257,11 @@ const handleSubmit = async (e) => {
   // Debugging the final shape of tasks before sending
   console.log('Tasks data being sent:', formData.tasks);
 
-  // Make the POST request to the server
+  
   try {
     const response = await fetch('http://localhost:3001/projects', {
       method: 'POST',
-      body: data, // Fetch API sets the Content-Type to multipart/form-data automatically
+      body: data, 
     });
 
     if (!response.ok) {
@@ -234,6 +270,7 @@ const handleSubmit = async (e) => {
 
     const result = await response.json();
     console.log('Server response:', result);
+    window.location.reload();
   } catch (error) {
     console.error('Error uploading data:', error);
   }
@@ -384,7 +421,7 @@ const handleSubmit = async (e) => {
           {/* Page Content */}
           <div className="row">
             {filteredProjects.map((project, index) => (
-              <ProjectCard key={index} project={project} />
+              <ProjectCard key={project.id} project={project} onEditClick={handleEditProjectClick} onDeleteClick={handleDeleteProjectClick}/>
             ))}
           </div>
         </div>
@@ -594,9 +631,9 @@ const handleSubmit = async (e) => {
                      <label>Team Members</label>
                       <div className="project-members d-flex flex-wrap">
                         {teamMembers.map((userId) => {
-                         const numericUserId = parseInt(userId, 10); // Convert userId to a number
+                         const numericUserId = parseInt(userId, 10); 
                          const user = users.find((user) => user.id === numericUserId);
-                         console.log("user:", user); // Add this line
+                         console.log("user:", user); 
                        if (user) {
                         return (
                          <div key={userId} className="d-inline-block position-relative mr-3 mb-3">
@@ -654,48 +691,48 @@ const handleSubmit = async (e) => {
                     />
                   </div>
                   <div className="input-block">
-    <label>Tasks</label>
-    {formData.tasks.map((task, index) => (
-        <div key={index} className="row align-items-center mb-3">
-            <div className="col-md-5">
-                <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Enter task description"
-                    value={task.description}
-                    onChange={(e) => handleTaskChange(index, 'description', e.target.value)}
-                />
-            </div>
-            <div className="col-md-4">
-                <label className="form-label d-block">Deadline:</label>
-                <DatePicker
-                    selected={task.deadline}
-                    onChange={(date) => handleTaskChange(index, 'deadline', date)}
-                    className="form-control"
-                    dateFormat="yyyy-MM-dd"
-                />
-            </div>
-            <div className="col-md-3">
-                <button
-                    className="btn btn-danger"
-                    type="button"
-                    onClick={() => handleRemoveTask(index)}
-                >
-                    Remove
-                </button>
-            </div>
-        </div>
-    ))}
-    <button
-        className="btn btn-secondary"
-        onClick={handleAddTask}
-    >
-        Add Task
-    </button>
-</div>
-
+                  <label>Tasks</label>
+                     {formData.tasks.map((task, index) => (
+                        <div key={index} className="row align-items-center mb-12">
+                          <div className="col-md-8">
+                              <input
+                                 type="text"
+                                 className="form-control"
+                                 placeholder="Enter task description"
+                                 value={task.description}
+                                 onChange={(e) => handleTaskChange(index, 'description', e.target.value)}
+                              />
+                          </div>
+                          <div className="col-md-4">
+                            <DatePicker
+                              selected={task.deadline}
+                              onChange={(date) => handleTaskChange(index, 'deadline', date)}
+                              placeholder="Enter task description"
+                              className="form-control"
+                              dateFormat="yyyy-MM-dd"
+                            />
+                          </div>
+                          <div className="col-md-4">
+                            <button
+                             className="btn btn-danger"
+                             type="button"
+                             onClick={() => handleRemoveTask(index)}
+                             >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                       ))}
+                      <button
+                        className="btn btn-secondary"
+                        type="button"
+                        onClick={handleAddTask}
+                       >
+                          Add Task
+                      </button>
+                   </div>
                   <div className="submit-section">
-                    <button className="btn btn-primary submit-btn">
+                    <button className="btn btn-primary submit-btn"  type="submit">
                       Submit
                     </button>
                   </div>
@@ -714,7 +751,7 @@ const handleSubmit = async (e) => {
 
 
         {/* Edit Project Modal */}
-        <Editproject />
+        <Editproject projectId={projectToEditId}/>
         {/* /Edit Project Modal */}
 
 
@@ -734,7 +771,11 @@ const handleSubmit = async (e) => {
                 <div className="modal-btn delete-action">
                   <div className="row">
                     <div className="col-6">
-                      <Link to="" className="btn btn-primary continue-btn">
+                      <Link 
+                         to="/app/projects/project_dashboard"
+                         className="btn btn-primary continue-btn"
+                         onClick={() => handleDeleteProject(projectToDelete)}
+                       >
                         Delete
                       </Link>
                     </div>
