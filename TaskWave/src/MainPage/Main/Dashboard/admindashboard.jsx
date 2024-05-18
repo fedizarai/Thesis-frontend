@@ -78,7 +78,7 @@ useEffect(() => {
       const usersData = await usersResponse.json();
       setUsers(usersData);
 
-      // Generating chart data
+      // Generating chart data for workload overview
       const loadedChartData = projectsData.map(project => ({
         y: project.title,
         "Working Hours": project.workinghours,
@@ -86,13 +86,23 @@ useEffect(() => {
       }));
       setChartData(loadedChartData);
 
-      // Calculate project progress data
-      const progressData = projectsData.map(project => ({
-      year: project.startdate ? project.startdate.slice(0, 4) : 'Unknown', // Add null check for startDate
-      completedTasks: project.tasks.filter(task => task.status === 2).length, // Count completed tasks
-      totalTasks: project.tasks.length // Total tasks
-    }));
-      setProjectProgressData(progressData);
+      // Calculate project progress data based on task deadlines
+      const progressData = projectsData.reduce((acc, project) => {
+        project.tasks.forEach(task => {
+          const year = task.deadline ? new Date(task.deadline).getFullYear().toString() : 'Unknown';
+          if (!acc[year]) {
+            acc[year] = { year, totalTasks: 0, completedTasks: 0 };
+          }
+          acc[year].totalTasks += 1;
+          if (task.status === 2) { // Assuming status 2 is 'completed'
+            acc[year].completedTasks += 1;
+          }
+        });
+        return acc;
+      }, {});
+
+      // Convert the accumulated object into an array for charting
+      setProjectProgressData(Object.values(progressData));
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -100,6 +110,7 @@ useEffect(() => {
 
   fetchData();
 }, []);
+
 
 
    useEffect(() => {
@@ -258,10 +269,7 @@ useEffect(() => {
                       <div className="card-body">
                         <h3 className="card-title">Projects Overview</h3>
                         <ResponsiveContainer width="100%" height={300}>
-                          <LineChart
-                            data={projectProgressData}
-                            margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
-                          >
+                          <LineChart data={projectProgressData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                             <CartesianGrid />
                             <XAxis dataKey="year" />
                             <YAxis />
@@ -272,7 +280,6 @@ useEffect(() => {
                               dataKey="completedTasks"
                               name="Completed Tasks"
                               stroke="#ff9b44"
-                              fill="#00c5fb"
                               strokeWidth={3}
                               dot={{ r: 3 }}
                               activeDot={{ r: 7 }}
@@ -282,14 +289,13 @@ useEffect(() => {
                               dataKey="totalTasks"
                               name="Total Tasks"
                               stroke="#fc6075"
-                              fill="#0253cc"
                               strokeWidth={3}
                               dot={{ r: 3 }}
                               activeDot={{ r: 7 }}
                             />
                           </LineChart>
-
                         </ResponsiveContainer>
+
                       </div>
                     </div>
                   </div>

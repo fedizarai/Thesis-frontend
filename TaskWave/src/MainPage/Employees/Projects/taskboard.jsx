@@ -25,6 +25,17 @@ const TaskBoard = ({projects}) => {
   const handleDateChange2 = (date) => {
     setSelectedDate2(date);
   };
+
+    // Calculate the average progress of all projects, round it, and convert to string without decimals
+  const averageProgress = Math.round(projects.reduce((acc, project) => {
+    const totalTasks = project.tasks.length;
+    const completedTasks = project.tasks.filter(task => task.status === 2).length;
+    const projectProgress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+    return acc + projectProgress;
+  }, 0) / (projects.length || 1));  // Avoid division by zero if no projects
+
+  const displayProgress = `${averageProgress}%`;  // Ensuring no decimal point
+
   return (
     <>
       <div className="page-wrapper">
@@ -58,10 +69,10 @@ const TaskBoard = ({projects}) => {
                     <div
                       className="progress-bar bg-success"
                       role="progressbar"
-                      style={{ width: "50%" }}
+                      style={{ width: displayProgress }}
                     />
                   </div>
-                  <span>50%</span>
+                  <span>{displayProgress}</span> 
                 </div>
               </div>
             </div>

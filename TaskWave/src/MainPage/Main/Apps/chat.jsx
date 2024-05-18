@@ -246,7 +246,8 @@ const Chat = () => {
                                         <div className="chat-bubble">
                                           <div className="chat-content">
                                             <p>{msg.message}</p>
-                                            <span className="chat-time">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                                            <span className="chat-time"> {new Date(msg.timestamp).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+</span>
                                           </div>
                                         </div>
                                       </div>
@@ -598,7 +599,7 @@ const Chat = () => {
 
 
       </div>
-      <Offcanvas />
+      
     </>
   );
 };

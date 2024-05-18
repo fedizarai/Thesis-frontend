@@ -360,14 +360,14 @@ if (!profileData) {
             <div className="row user-tabs">
               <div className="col-lg-12 col-md-12 col-sm-12 line-tabs">
                 <ul className="nav nav-tabs nav-tabs-bottom">
-                  <li className="nav-item">
+                  {/*<li className="nav-item">
                     <Link
                       to="#emp_profile"
                       data-bs-toggle="tab"
                       className="nav-link active">
                         Experience
                     </Link>
-                  </li>
+                  </li>*/}
                   <li className="nav-item">
                     <Link
                       to="#emp_projects"
@@ -387,7 +387,7 @@ if (!profileData) {
 
 
             {/* Experience Info Tab */}
-            <div
+          {/*  <div
               id="emp_profile"
               className="pro-overview tab-pane fade show active">
               <div className="row">
@@ -457,7 +457,7 @@ if (!profileData) {
                   </div>
                 </div>
               </div>
-            </div>
+            </div>*/}
             {/* /Experience Info Tab */}
 
 

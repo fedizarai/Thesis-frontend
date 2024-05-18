@@ -85,11 +85,14 @@ const ProjectView = ({ projects }) => {
   useEffect(() => {
     if (projects && taskId) {
       const foundTask = projects.find((project) => project.id === parseInt(taskId, 10));
+      console.log('projrctid:',taskId);
       if (foundTask) {
         setTaskDetails(foundTask);
       }
+
     }
   }, [projects, taskId]);
+  console.log("Current taskDetails state:", taskDetails);
 
   if (!taskDetails) {
     return null; // Render nothing if taskDetails is not available yet
@@ -97,34 +100,54 @@ const ProjectView = ({ projects }) => {
  
  const numberOfCompletedTasks = taskDetails.tasks?.filter(task => task.status === 2)?.length ?? 0;
 
-// Calculate number of open tasks
-const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
+  
+  const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
 
-
-  // Calculate progress
+  
   const progress = Math.round((numberOfCompletedTasks / numberOfOpenTasks) * 100);
 
-
-  
-  
   const fileIcons = {
     pdf: faFilePdf,
     jpg: faFileImage,
     jpeg: faFileImage,
     png: faFileImage,
-    txt: faFileAlt,
-  
-};
+    txt: faFileAlt,};
+
   const getFileIcon = (fileName) => {
     const extension = fileName.split('.').pop().toLowerCase(); // Get the file extension
     return fileIcons[extension] || faFile; // Return the corresponding icon or a default icon
   };
 
-  const deleteImage = (e, indexToDelete) => {
-    e.preventDefault(); // Prevent the default link action
-    const updatedImages = taskDetails.imageFiles.filter((_, index) => index !== indexToDelete);
-    setTaskDetails({ ...taskDetails, imageFiles: updatedImages });
-  };
+  const fileDelete = async (e, fileId) => {
+    e.preventDefault();
+    console.log('fileId',fileId);
+    // Call the backend to delete the file
+    try {
+        const response = await fetch(`http://localhost:3001/files/${fileId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                // Include authentication headers if needed
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Update the state to remove the file from the list within the project data
+            const updatedFiles = taskDetails.files.filter(file => file.id !== fileId);
+            setTaskDetails({ ...taskDetails, files: updatedFiles });
+            
+        } else {
+            // Handle errors, e.g., file not found or server error
+            throw new Error(data.error);
+        }
+    } catch (error) {
+        console.error('Error deleting file:', error.message);
+        alert(`Error deleting file: ${error.message}`);
+    }
+};
+
 
   const downloadImage = (e, fileUrl, fileName) => {
       e.preventDefault(); 
@@ -136,12 +159,6 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
       document.body.appendChild(link); 
       link.click(); 
       document.body.removeChild(link); 
-  };
-
-  const fileDelete = (e, indexToDelete) => {
-    e.preventDefault();
-    const updatedFiles = taskDetails.uploadedFiles.filter((_, index) => index !== indexToDelete);
-    setTaskDetails({ ...taskDetails, uploadedFiles: updatedFiles });
   };
 
   const fileDownload = (e, fileUrl, fileName) => {
@@ -171,17 +188,16 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
  
   
 
-
-
  const handleTaskSelect = (taskId) => {
-  setSelectedTaskId(taskId);
-  console.log('selectedid: ',selectedTaskId)
-  // Code to show modal
- };
+    setSelectedTaskId(taskId);
+    console.log('selectedid: ',selectedTaskId)
+    // Code to show modal
+   };
 
 
-  const assignTask = (taskId, user) => {
-    console.error('taskId:', taskId);
+  const assignTask = (tasksId, user) => {
+    console.error('projectId:', taskId);
+    console.error('taskId:', tasksId);
     console.error('userid:', user.id);
     if (!taskId || !user) {
       console.log("Invalid task or user selection");
@@ -191,7 +207,7 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
     fetch('http://localhost:3001/assign', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ taskId: taskId, userId: user.id })
+      body: JSON.stringify({ projectId: taskId,taskId: tasksId, userId: user.id })
     })
     .then(response => {
       if (!response.ok) throw new Error('Failed to assign task');
@@ -206,10 +222,10 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
     });
    };
 
- const handleStatusChange = async (taskId, newStatus) => {
-  console.log('taskId',taskId);
-   console.log('newStatus',newStatus);
-  try {
+   const handleStatusChange = async (taskId, newStatus) => {
+    console.log('taskId',taskId);
+     console.log('newStatus',newStatus);
+    try {
    
     const response = await fetch('http://localhost:3001/updateTaskStatus', {
       method: 'POST',
@@ -233,8 +249,6 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
 };
   //upload solution
   
-
-
 
   const filteredMembers = searchTerm.length === 0
     ? taskDetails.team
@@ -347,7 +361,7 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                                 onClick={(e) => {
                                     e.preventDefault(); // Prevent the link from navigating.
                                     e.stopPropagation(); // Stop the event from bubbling up.
-                                    deleteImage(e, index); // Call your delete function.
+                                    fileDelete(e, file.id); // Call your delete function.
                               }}>
                               Delete
                             </Link>
@@ -416,7 +430,7 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                         <span className="file-author">
                           <Link to="#">{file.creator}</Link>
                         </span>{" "}
-                        <span className="file-date">{file.date}</span>
+                        <span className="file-date">{file.date} , Task : {file.task_description}</span>
                         <div className="file-size">Size : {file.size}</div>
                       </div>
                       <ul className="files-action">
@@ -432,7 +446,7 @@ const numberOfOpenTasks = taskDetails.tasks?.length ?? 0;
                             <Link className="dropdown-item" to="#" onClick={(e) => fileDownload(e, file.src, file.name)}>
                               Download
                             </Link>
-                             <Link className="dropdown-item" to="#" onClick={(e) => fileDelete(e, index)}>
+                             <Link className="dropdown-item" to="#" onClick={(e) => fileDelete(e, file.id)}>
                               Delete
                             </Link>
                           </div>

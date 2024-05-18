@@ -127,56 +127,61 @@ const handleAddTask = (event) => {
   };
 
   const handleChange = (e) => {
-  const { name, value } = e.target;
+    const { name, value } = e.target;
 
-  if (name === 'creator' || name === 'leadername') {
-    const userId = getUserIdByName(value);
-    setFormData(prevFormData => ({
-      ...prevFormData,
-      [name]: userId || '' // If userId is null (i.e., user not found), set the field to an empty string
-    }));
-  } else {
-    setFormData(prevFormData => ({
-      ...prevFormData,
-      [name]: value
-    }));
-  }
+    if (name === 'creator' || name === 'leadername') {
+      const userId = getUserIdByName(value);
+      setFormData(prevFormData => ({
+        ...prevFormData,
+        [name]: userId || '' // If userId is null (i.e., user not found), set the field to an empty string
+      }));
+    } else {
+      setFormData(prevFormData => ({
+        ...prevFormData,
+        [name]: value
+      }));
+    }
 
-  console.log('formData:', formData); 
-};
+    console.log('formData:', formData); 
+  };
 
 
    const filteredProjects = projects.filter((project) =>{
-    
+      
+      let titleMatch = true;
+      let creatorMatch = true;
+      let priorityMatch = true;
 
 
-    let titleMatch = true;
-    let creatorMatch = true;
-    let priorityMatch = true;
+    // Filter based on name
+      if (titleInput) {
+         titleMatch = project.title.toLowerCase().includes(titleInput.toLowerCase());
+      }
 
-
-  // Filter based on name
-    if (titleInput) {
-       titleMatch = project.title.toLowerCase().includes(titleInput.toLowerCase());
+     
+      
+      if (searchCreator) {
+         creatorMatch = project.creator.toLowerCase().includes(searchCreator.toLowerCase());
     }
+      // Filter based on city
+      if (searchPriority) {
+         priorityMatch = project.priority.toLowerCase().includes(searchPriority.toLowerCase());
+      }
+      // Combine all filters
+      return titleMatch && creatorMatch && priorityMatch
+    });
 
 
-    // Filter based on age
-    if (searchCreator) {
-       creatorMatch = project.creator.toLowerCase().includes(searchCreator.toLowerCase());
-  }
-    // Filter based on city
-    if (searchPriority) {
-       priorityMatch = project.priority.toLowerCase().includes(searchPriority.toLowerCase());
-    }
-    // Combine all filters
-    return titleMatch && creatorMatch && priorityMatch
-  });
 
    const getUserIdByName = (userName) => {
     const user = users.find(user => user.name === userName);
     return user ? user.id : null;
   };
+  const getNameById = (userId) => {
+  const user = users.find(user => user.id === parseInt(userId));
+  return user ? user.name : '';
+};
+
 
   const handleUserSelect = (event) => {
     setSelectedUser(event.target.value);
@@ -562,7 +567,7 @@ const handleSubmit = async (e) => {
                       <select 
                          className={`form-control `} 
                          name="creator"
-                         value={formData.creator}
+                         value={getNameById(formData.creator)}
                          onChange={handleChange}
                          
                        >
@@ -586,7 +591,7 @@ const handleSubmit = async (e) => {
                       <select 
                          className={`form-control `} 
                          name="leadername"
-                         value={formData.leadername} 
+                         value={getNameById(formData.leadername)} 
                          onChange={handleChange}
                         
                        >
