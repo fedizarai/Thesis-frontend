@@ -159,9 +159,9 @@ const handleAddTask = (event) => {
       }
 
      
-      
+      console.log('project.creator',project.creator);
       if (searchCreator) {
-         creatorMatch = project.creator.toLowerCase().includes(searchCreator.toLowerCase());
+         creatorMatch = project.description.toLowerCase().includes(searchCreator.toLowerCase());
     }
       // Filter based on city
       if (searchPriority) {
@@ -394,7 +394,7 @@ const handleSubmit = async (e) => {
                   onFocus={() => setFocused1(true)}
                   onBlur={() => setFocused1(false)}
                 />
-                <label className="focus-label">Employee Name</label>
+                <label className="focus-label">keyword</label>
               </div>
             </div>
             <div className="col-sm-6 col-md-3">
@@ -411,7 +411,7 @@ const handleSubmit = async (e) => {
                   onFocus={() => setFocused1(true)}
                   onBlur={() => setFocused1(false)}
                 />
-                <label className="focus-label">Domain</label>
+                <label className="focus-label">Priority</label>
               </div>
             </div>
             <div className="col-sm-6 col-md-3">

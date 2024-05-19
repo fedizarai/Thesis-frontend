@@ -28,6 +28,9 @@ const Header = (props) => {
   const [projects, setProjects] = useState([]);
   const profileId = Cookies.get('userid');
   const [messages, setMessages] = useState([]);
+  const [userImage, setUserImage] = useState('');
+
+  
   const findUserNameById = (id, users) => {
     const user = users.find(user => user.id === parseInt(profileId));
     return user ? user.name : null;
@@ -40,9 +43,11 @@ const Header = (props) => {
         const response = await fetch("http://localhost:3001/users");
         const data = await response.json();
         setUsers(data);
-        const profileName = findUserNameById(parseInt(profileId), data);
-
-        setProfileName(profileName); // Set the profile name after users are fetched
+        const user = data.find(user => user.id === parseInt(profileId));
+        if (user) {
+          setProfileName(user.name);
+          setUserImage(user.image); // Assuming 'image' is the key for the image URL in your user object
+      }
       } catch (error) {
         console.error("Error fetching users:", error);
       }
@@ -348,7 +353,7 @@ const Header = (props) => {
             className="dropdown-toggle nav-link"
             data-bs-toggle="dropdown">
             <span className="user-img me-1">
-              <img src={Avatar_01} alt="" />
+              <img src={userImage || Avatar_01} alt={profileName || 'User'} />
               <span className="status online" />
             </span>
             <span>{profileName || "Admin"}</span>

@@ -66,6 +66,10 @@ const Editproject = ({projectId}) => {
   const handleUserSelect = (event) => {
     setSelectedUser(event.target.value);
   };
+  const getNameById = (userId) => {
+  const user = users.find(user => user.id === parseInt(userId));
+  return user ? user.name : '';
+};
 
   const handleAddTeamMember = () => {
    if (selectedUser && !teamMembers.includes(selectedUser)) {
@@ -166,6 +170,7 @@ const Editproject = ({projectId}) => {
 
         const result = await response.json();
         console.log('Server response:', result);
+        window.location.reload();
     } catch (error) {
         console.error('Error updating project:', error);
     }
@@ -377,7 +382,7 @@ const Editproject = ({projectId}) => {
                       <select 
                          className={`form-control `} 
                          name="creator"
-                         value={formData.creator}
+                         value={getNameById(formData.creator)}
                          onChange={handleChange}
                          
                        >
@@ -401,7 +406,7 @@ const Editproject = ({projectId}) => {
                       <select 
                          className={`form-control `} 
                          name="leadername"
-                         value={formData.leadername} 
+                         value={getNameById(formData.leadername)}  
                          onChange={handleChange}
                         
                        >
