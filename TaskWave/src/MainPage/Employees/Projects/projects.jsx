@@ -9,6 +9,7 @@ import Editproject from "../../../_components/modelbox/Editproject";
 import Offcanvas from "../../../Entryfile/offcanvance";
 import ProjectCard from './ProjectCard';
 import "./projectview.css";
+import Cookies from 'js-cookie';
 
 
 import "../../index.css";
@@ -35,6 +36,8 @@ const Projects = ({projects}) => {
   const [titleInput, setTitleInput] = useState('');
   const [searchCreator, setSearchCreator] = useState('');
   const [selectedUser, setSelectedUser] = useState('');
+  const profileId = Cookies.get('userid');
+  const [userPosition, setUserPosition] = useState('');
   const [teamMembers, setTeamMembers] = useState([]);
   const [searchPriority, setSearchPriority] = useState('');
   const [projectToEditId, setProjectToEditId] = useState(null);
@@ -287,22 +290,37 @@ const handleSubmit = async (e) => {
   function onChange(e) {
     setHtml(e.target.value);
   }
-   useEffect(() => {
+  useEffect(() => {
     const fetchUsers = async () => {
-      try {
-        const response = await fetch("http://localhost:3001/users");
-        if (!response.ok) {
-          throw new Error("Failed to fetch users");
+        try {
+            const response = await fetch("http://localhost:3001/users");
+            if (!response.ok) {
+                throw new Error("Failed to fetch users");
+            }
+            const usersData = await response.json();
+            setUsers(usersData); // Set all fetched users in the state
+
+            // Find the connected user by the profileId
+            const connectedUser = usersData.find(user => user.id === parseInt(profileId));
+            if (connectedUser) {
+                setUserPosition(connectedUser.position); // Set the position of the connected user
+                console.log("Logged in position:", connectedUser.position);
+            } else {
+                console.log("No user found with id:", profileId);
+            }
+        } catch (error) {
+            console.error("Error fetching users:", error);
         }
-        const data = await response.json();
-        setUsers(data);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
     };
 
-    fetchUsers();
-  }, []);
+    // Check if profileId is available before fetching
+    if (profileId) {
+        fetchUsers();
+    } else {
+        console.log("No profileId available");
+    }
+}, [profileId]); // Include profileId in the dependency array to refetch when it changes
+
 
   useEffect(() => {
     if ($(".select").length > 0) {
@@ -337,6 +355,7 @@ const handleSubmit = async (e) => {
                 </ul>
               </div>
               <div className="col-auto float-end ms-auto">
+               {userPosition === "Manager" && (
                 <Link
                   to="#"
                   className="btn add-btn"
@@ -344,6 +363,7 @@ const handleSubmit = async (e) => {
                   data-bs-target="#create_project">
                   <i className="fa fa-plus" /> Create Project
                 </Link>
+               )}  
                 <div className="view-icons">
                   <Link
                     to="/app/projects/project_dashboard"

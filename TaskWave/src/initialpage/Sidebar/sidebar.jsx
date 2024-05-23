@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { withRouter } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { Scrollbars } from "react-custom-scrollbars";
+import Cookies from 'js-cookie';
 
 const Sidebar = (props) => {
   const MenuMore = () => {
@@ -15,11 +16,40 @@ const Sidebar = (props) => {
   const [level3Menu, setLevel3Menu] = useState("");
   const [isSidebarExpanded, setSidebarExpanded] = useState(false);
   const [isMouseOverSidebar, setMouseOverSidebar] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [userPosition, setUserPosition] = useState(''); 
+
+  const profileId = Cookies.get('userid');
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/users");
+        if (!response.ok) {
+          throw new Error("Failed to fetch users");
+        }
+        const usersData = await response.json();
+        setUsers(usersData);
+        
+        // Find user by profileId and update the position
+        const connectedUser = usersData.find(user => user.id === parseInt(profileId));
+        if (connectedUser) {
+          setUserPosition(connectedUser.position); // Set the position of the connected user
+          console.log("logged in position ",connectedUser.position);
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   const toggleSidebar = (value) => {
     setSideMenu(value);
     setSideMenuNew(value);
   };
+
 
   const toggleLvelTwo = (value) => {
     setLevel2Menu(value);
@@ -70,32 +100,28 @@ const Sidebar = (props) => {
               <li className="menu-title">
                 <span>Main</span>
               </li>
-              <li className="submenu">
-                <Link
-                  to="#"
-                  className={isSideMenu == "dashboard" ? "subdrop" : ""}
-                  onClick={() =>
-                    toggleSidebar(isSideMenu == "dashboard" ? "" : "dashboard")
-                  }>
-                  <i className="la la-dashboard" /> <span> Dashboard</span>{" "}
-                  <span className="menu-arrow" />
-                </Link>
-                {isSideMenu == "dashboard" ? (
-                  <ul>
-                    <li>
-                      <Link
-                        className={
-                          pathname.includes("main/dashboard") ? "active" : ""
-                        }
-                        to="/app/main/dashboard">
-                        Admin Dashboard
-                      </Link>
-                    </li>
-                  </ul>
-                ) : (
-                  ""
-                )}
-              </li>
+              {userPosition === "Manager" && (
+                <li className="submenu">
+                  <Link
+                    to="#"
+                    className={isSideMenu === "dashboard" ? "subdrop" : ""}
+                    onClick={() => toggleSidebar(isSideMenu === "dashboard" ? "" : "dashboard")}
+                  >
+                    <i className="la la-dashboard" /> <span> Dashboard</span> <span className="menu-arrow" />
+                  </Link>
+                  {isSideMenu === "dashboard" && (
+                    <ul>
+                      <li>
+                        <Link
+                          className={window.location.pathname.includes("main/dashboard") ? "active" : ""}
+                          to="/app/main/dashboard">
+                          Admin Dashboard
+                        </Link>
+                      </li>
+                    </ul>
+                  )}
+                </li>
+               )} 
               <li className="submenu">
                 <Link
                   to="#"
@@ -122,25 +148,29 @@ const Sidebar = (props) => {
                   ""
                 )}
               </li>
-              <li className="menu-title">
-                <span>Employees</span>
-              </li>
-              <li className="submenu">
-                <Link
-                  to="/app/employee/allemployees"
-                  className={isSideMenu == "employee" ? "subdrop" : ""}
-                  onClick={() =>
-                    toggleSidebar(isSideMenu == "employee" ? "" : "employee")
-                  }>
-                  <i className="la la-user" /><span > All Employees</span> 
-                </Link>
+               {(userPosition === "Manager" || userPosition === "Team Leader") && (
+                 <>
+                  <li className="menu-title">
+                    <span>Employees</span>
+                  </li>
+                  <li className="submenu">
+                    <Link
+                      to="/app/employee/allemployees"
+                      className={isSideMenu == "employee" ? "subdrop" : ""}
+                      onClick={() =>
+                        toggleSidebar(isSideMenu == "employee" ? "" : "employee")
+                      }>
+                      <i className="la la-user" /><span > All Employees</span> 
+                    </Link>
 
-                <li className={pathname.includes("leads") ? "active" : ""}>
-                <Link to="/app/employees/leads">
-                  <i className="la la-user-secret" /> <span>Leads</span>
-                </Link>
-              </li>
-              </li>
+                      <li className={pathname.includes("leads") ? "active" : ""}>
+                      <Link to="/app/employees/leads">
+                        <i className="la la-user-secret" /> <span>Leads</span>
+                      </Link>
+                    </li>
+                  </li>
+                  </>
+                )}
               <li className="menu-title">
                 <span>Projects</span>
               </li>

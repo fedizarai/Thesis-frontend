@@ -6,6 +6,7 @@ import { DefaultEditor } from "react-simple-wysiwyg";
 import { Link } from "react-router-dom";
 import Editproject from "../../../_components/modelbox/Editproject";
 import Offcanvas from "../../../Entryfile/offcanvance";
+import Cookies from 'js-cookie';
 
 
 import {
@@ -32,12 +33,47 @@ const ProjectCard = ({ project , onEditClick ,onDeleteClick}) =>  {
 
   const progress=Math.round((numberOfCompletedTasks / numberOfOpenTasks) * 100);
 
+  const profileId = Cookies.get('userid');
+  const [users, setUsers] = useState([]);
+  const [userPosition, setUserPosition] = useState('');
+  useEffect(() => {
+    const fetchUsers = async () => {
+        try {
+            const response = await fetch("http://localhost:3001/users");
+            if (!response.ok) {
+                throw new Error("Failed to fetch users");
+            }
+            const usersData = await response.json();
+            setUsers(usersData); // Set all fetched users in the state
+
+            // Find the connected user by the profileId
+            const connectedUser = usersData.find(user => user.id === parseInt(profileId));
+            if (connectedUser) {
+                setUserPosition(connectedUser.position); // Set the position of the connected user
+                console.log("Logged in position:", connectedUser.position);
+            } else {
+                console.log("No user found with id:", profileId);
+            }
+        } catch (error) {
+            console.error("Error fetching users:", error);
+        }
+    };
+
+    // Check if profileId is available before fetching
+    if (profileId) {
+        fetchUsers();
+    } else {
+        console.log("No profileId available");
+    }
+}, [profileId]);
+
 
   return (
 
      <div className="col-lg-4 col-sm-6 col-md-4 col-xl-3">
               <div className="card">
                 <div className="card-body">
+                 {(userPosition === "Manager" || userPosition === "Team Leader") && (
                   <div className="dropdown dropdown-action profile-action">
                     <Link
                       to="#"
@@ -65,6 +101,7 @@ const ProjectCard = ({ project , onEditClick ,onDeleteClick}) =>  {
                       </Link>
                     </div>
                   </div>
+                 )} 
                   <h4 className="project-title">
                     <Link to={`/app/projects/projects-view/${id}`}>
                       {title}

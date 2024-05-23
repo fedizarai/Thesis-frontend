@@ -21,6 +21,7 @@ import Sidebar from "../../../initialpage/Sidebar/sidebar";
 import Header from "../../../initialpage/Sidebar/header";
 import Offcanvas from "../../../Entryfile/offcanvance";
 import EmployeeCard from './EmployeeCard';
+import Cookies from 'js-cookie';
 
 
 
@@ -34,6 +35,8 @@ const AllEmployees = (  ) => {
   const [employeeToDeleteId, setEmployeeToDeleteId] = useState(null);
   const [users, setUsers] = useState([]);
   const [employeeToEditId, setEmployeeToEditId] = useState(null);
+  const profileId = Cookies.get('userid');
+  const [userPosition, setUserPosition] = useState('');
 
  
 
@@ -124,20 +127,35 @@ const employeeDelete = async (employeeId) => {
 
    useEffect(() => {
     const fetchUsers = async () => {
-      try {
-        const response = await fetch("http://localhost:3001/users");
-        if (!response.ok) {
-          throw new Error("Failed to fetch users");
+        try {
+            const response = await fetch("http://localhost:3001/users");
+            if (!response.ok) {
+                throw new Error("Failed to fetch users");
+            }
+            const usersData = await response.json();
+            setUsers(usersData); // Set all fetched users in the state
+
+            // Find the connected user by the profileId
+            const connectedUser = usersData.find(user => user.id === parseInt(profileId));
+            if (connectedUser) {
+                setUserPosition(connectedUser.position); // Set the position of the connected user
+                console.log("Logged in position:", connectedUser.position);
+            } else {
+                console.log("No user found with id:", profileId);
+            }
+        } catch (error) {
+            console.error("Error fetching users:", error);
         }
-        const data = await response.json();
-        setUsers(data);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
     };
 
-    fetchUsers();
-  }, []);
+    // Check if profileId is available before fetching
+    if (profileId) {
+        fetchUsers();
+    } else {
+        console.log("No profileId available");
+    }
+}, [profileId]); // Include profileId in the dependency array to refetch when it changes
+
 
 
 
@@ -169,13 +187,15 @@ const employeeDelete = async (employeeId) => {
                   </ul>
                 </div>
                 <div className="col-auto float-end ms-auto">
-                  <Link
-                    to="#"
-                    className="btn add-btn"
-                    data-bs-toggle="modal"
-                    data-bs-target="#add_employee">
-                    <i className="fa fa-plus" /> Add Employee
-                  </Link>
+                  {userPosition === "Manager" && (
+                    <Link
+                      to="#"
+                      className="btn add-btn"
+                      data-bs-toggle="modal"
+                      data-bs-target="#add_employee">
+                      <i className="fa fa-plus" /> Add Employee
+                    </Link>
+                   )}  
                   <div className="view-icons">
                     <Link
                       to="/app/employee/allemployees"

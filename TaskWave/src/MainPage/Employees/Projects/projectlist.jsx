@@ -4,6 +4,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Helmet } from "react-helmet";
 import { Link } from "react-router-dom";
+import Cookies from 'js-cookie';
 import {
   Avatar_16,
   Avatar_02,
@@ -34,6 +35,8 @@ const ProjectList = ({projects}) => {
   const [selectedUser, setSelectedUser] = useState('');
   const [teamMembers, setTeamMembers] = useState([]);
   const [searchPriority, setSearchPriority] = useState('');
+  const profileId = Cookies.get('userid');
+  const [userPosition, setUserPosition] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     workinghours: '',
@@ -266,20 +269,37 @@ const handleSubmit = async (e) => {
   }
   useEffect(() => {
     const fetchUsers = async () => {
-      try {
-        const response = await fetch("http://localhost:3001/users");
-        if (!response.ok) {
-          throw new Error("Failed to fetch users");
+        console.log("Fetching users...");
+        try {
+            const response = await fetch("http://localhost:3001/users");
+            if (!response.ok) {
+                throw new Error("Failed to fetch users");
+            }
+            const usersData = await response.json();
+            console.log("Users fetched:", usersData);
+
+            // Find the connected user by the profileId
+            const connectedUser = usersData.find(user => user.id === parseInt(profileId));
+            if (connectedUser) {
+                setUserPosition(connectedUser.position); // Set the position of the connected user
+                console.log("Logged in position :", connectedUser.position);
+            } else {
+                console.log("No user found with id:", profileId);
+            }
+        } catch (error) {
+            console.error("Error fetching users:", error);
         }
-        const data = await response.json();
-        setUsers(data);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
     };
 
-    fetchUsers();
-  }, []);
+    // Check if profileId is available before fetching
+    if (profileId) {
+        fetchUsers();
+    } else {
+        console.log("No profileId available");
+    }
+}, [profileId]); // Run this effect when profileId changes
+
+
   useEffect(() => {
     if ($(".select").length > 0) {
       $(".select").select2({
@@ -315,13 +335,15 @@ const handleSubmit = async (e) => {
                 </ul>
               </div>
               <div className="col-auto float-end ms-auto">
-                <Link
-                  to="#"
-                  className="btn add-btn"
-                  data-bs-toggle="modal"
-                  data-bs-target="#create_project">
-                  <i className="fa fa-plus" /> Create Project
-                </Link>
+                 {userPosition === "Manager" && (
+                  <Link
+                    to="#"
+                    className="btn add-btn"
+                    data-bs-toggle="modal"
+                    data-bs-target="#create_project">
+                    <i className="fa fa-plus" /> Create Project
+                  </Link>
+                 )}
                 <div className="view-icons">
                   <Link
                     to="/app/projects/project_dashboard"

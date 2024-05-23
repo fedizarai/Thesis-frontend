@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { Link } from "react-router-dom";
 import { Applogo } from "../Entryfile/imagepath.jsx";
@@ -7,9 +7,46 @@ import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import { login } from "../Entryfile/features/users.jsx";
 import { yupResolver } from "@hookform/resolvers/yup/dist/yup.js";
+import Cookies from 'js-cookie';
 
 const Loginpage = (props) => {
   const [loginError, setLoginError] = useState('');
+  const profileId = Cookies.get('userid');
+  const [users, setUsers] = useState([]);
+  const [userPosition, setUserPosition] = useState('');
+  let resp = "";
+  const url = "http://localhost:3001"
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+        try {
+            const response = await fetch(url + "/users");
+            if (!response.ok) {
+                throw new Error("Failed to fetch users");
+            }
+            const usersData = await response.json();
+            setUsers(usersData); // Set all fetched users in the state
+
+            // Find the connected user by the profileId
+            const connectedUser = usersData.find(user => user.id === parseInt(profileId));
+            if (connectedUser) {
+                //setUserPosition(connectedUser.position); // Set the position of the connected user
+                console.log("Logged in position:", connectedUser.position);
+            } else {
+                console.log("No user found with id:", profileId);
+            }
+        } catch (error) {
+            console.error("Error fetching users:", error);
+        }
+    };
+
+    // Check if profileId is available before fetching
+    if (profileId) {
+        fetchUsers();
+    } else {
+        console.log("No profileId available");
+    }
+}, [profileId]);
   const validationSchema = Yup.object().shape({
     email: Yup.string().required("Email is required").email("Email is invalid"),
     password: Yup.string()
@@ -17,6 +54,9 @@ const Loginpage = (props) => {
       .min(6, "Password must be at least 6 characters")
       .max(20, "Password must not exceed 20 characters"),
   });
+
+  
+
   const {
     register,
     handleSubmit,
@@ -26,8 +66,8 @@ const Loginpage = (props) => {
   });
 
   const onSubmit = (data) => {
-      console.log(data);
-      fetch('http://localhost:3001/signin', {
+      console.log('sigin in data',data);
+      fetch(url + '/signin', {
         method: 'POST',
         headers: {
          'Content-Type': 'application/json',
@@ -37,16 +77,21 @@ const Loginpage = (props) => {
     })
     .then(response => {
       if (response.ok) {
-        return response.json();
+        resp = response.json();
+        console.log(resp);
+        return resp;
       }
       throw new Error('Login failed');
     })
-    .then(data => {
+    .then(obj => {
       setLoginError('');
-      dispatch(login(data));
-      props.history.push("/app/main/dashboard");
+      dispatch(login(obj));
+      //console.log('qqqqqqqqqqqqqqqqqqqqqqqqqq',obj.position);
+      const redirectPath = obj.position === 'Manager' ? '/app/main/dashboard' : '/app/projects/project_dashboard';
+      props.history.push(redirectPath);
     })
     .catch((error) => {
+      console.log(error);
       setLoginError("Login failed !Wrong email or password");
     });
   };

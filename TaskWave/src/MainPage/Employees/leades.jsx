@@ -68,8 +68,8 @@ const Leads = () => {
     },
 
     {
-      title: "Project",
-      dataIndex: "project",
+      title: "Mobile",
+      dataIndex: "mobile",
       render: (text) => <Link to="/app/projects/projects-view">{text}</Link>,
       sorter: (a, b) => a.project.length - b.project.length,
     },
